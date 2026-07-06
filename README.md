@@ -48,3 +48,5 @@ npm run preview
 ## Deployment
 
 The app builds to the `dist/` folder and can be deployed as a static site, for example to Firebase Hosting.
+
+Live app: https://radio-calc.web.app
