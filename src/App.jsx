@@ -7,6 +7,7 @@ import {
   Lightbulb,
   List,
   SlidersHorizontal,
+  Thermometer,
   Waves,
   Split,
 } from 'lucide-react';
@@ -24,6 +25,7 @@ const tabs = [
   { id: 'ohm', label: 'Закон Ома', icon: Gauge },
   { id: 'led', label: 'Резистор нагрузки', icon: Lightbulb },
   { id: 'pot', label: 'Регулятор', icon: SlidersHorizontal },
+  { id: 'soldering', label: 'Пайка', icon: Thermometer },
   { id: 'pcb', label: 'PCB Trace', icon: Layers3 },
   { id: 'markings', label: 'Маркировка', icon: Cpu },
   { id: 'resistors', label: 'Резисторы', icon: List },
@@ -39,6 +41,136 @@ const resistorDecades = [
   ['10000', '10-91 kΩ'],
   ['100000', '100-910 kΩ'],
   ['1000000', '1-9.1 MΩ'],
+];
+
+const solderAlloys = [
+  {
+    id: 'lead',
+    label: 'Sn60Pb40 / Sn63Pb37',
+    short: 'Свинцовый',
+    melting: '183-190 °C',
+    range: [300, 340],
+    note: 'Плавится мягче и быстрее. Для старой техники и SnPb-припоя обычно не нужна экстремальная температура.',
+  },
+  {
+    id: 'leadFree',
+    label: 'Pb-Free / SAC / SnAgCu',
+    short: 'Бессвинцовый',
+    melting: '217-221 °C',
+    range: [340, 380],
+    note: 'Требует больше тепла и хорошего флюса. Часто встречается на RoHS/PbF/LF платах.',
+  },
+  {
+    id: 'lowTemp',
+    label: 'Bi/Sn низкотемпературный',
+    short: 'Низкотемпературный',
+    melting: '138-170 °C',
+    range: [230, 280],
+    note: 'Используют для деликатного демонтажа и снижения тепловой нагрузки. Не смешивайте без понимания задачи.',
+  },
+  {
+    id: 'unknown',
+    label: 'Неизвестный припой',
+    short: 'Неизвестно',
+    melting: 'проверьте по месту',
+    range: [330, 360],
+    note: 'Начинайте с умеренной температуры, добавьте флюс и смотрите, как быстро припой смачивает жало и площадку.',
+  },
+];
+
+const solderTasks = [
+  {
+    id: 'throughHole',
+    label: 'Выводные детали',
+    badge: 'Обычная пайка',
+    adjust: [0, 0],
+    tip: 'Для резисторов, конденсаторов и обычных ножек держите контакт коротким: примерно 1-3 секунды на точку.',
+  },
+  {
+    id: 'smd',
+    label: 'SMD и мелкие площадки',
+    badge: 'Аккуратно',
+    adjust: [-20, -10],
+    tip: 'Лучше тонкое жало, флюс и короткое касание. Маленькие площадки легко перегреть или сорвать.',
+  },
+  {
+    id: 'plastic',
+    label: 'Разъемы / пластик рядом',
+    badge: 'Риск плавления',
+    adjust: [-30, -15],
+    tip: 'Температуру держите ниже, работайте быстро. Пластик разъемов часто страдает раньше, чем сама пайка.',
+  },
+  {
+    id: 'ground',
+    label: 'Земляной полигон / массивная площадка',
+    badge: 'Много меди',
+    adjust: [30, 50],
+    tip: 'Если тепло уходит в плату, помогает широкое жало, флюс и преднагрев. Не компенсируйте все одной максимальной температурой.',
+  },
+  {
+    id: 'desolder',
+    label: 'Демонтаж',
+    badge: 'Быстро прогреть',
+    adjust: [20, 40],
+    tip: 'Добавьте свежий припой и флюс: смесь обычно плавится легче, а время нагрева площадки становится меньше.',
+  },
+  {
+    id: 'wires',
+    label: 'Лужение проводов',
+    badge: 'Масса металла',
+    adjust: [10, 30],
+    tip: 'Провод отводит тепло. Берите достаточно крупное жало, чтобы прогреть жилу быстро и не плавить изоляцию.',
+  },
+];
+
+const heatSensitiveParts = [
+  'пластиковые разъемы и держатели',
+  'светодиоды и оптопары',
+  'электролитические конденсаторы',
+  'микросхемы в мелких корпусах',
+  'старые пятаки и тонкие дорожки',
+];
+
+const solderPrepTips = [
+  {
+    title: 'Разогреть',
+    text: 'Дайте станции выйти на температуру. Холодное жало плохо передает тепло и пачкает пайку.',
+  },
+  {
+    title: 'Очистить жало',
+    text: 'Снимите черный налет влажной губкой или латунной стружкой. Блестящее жало работает заметно лучше.',
+  },
+  {
+    title: 'Залудить',
+    text: 'Нанесите тонкий слой припоя на кончик жала. Это улучшает теплопередачу к выводу и площадке.',
+  },
+  {
+    title: 'Держать чистым',
+    text: 'Во время работы периодически чистите и снова лудите жало. Сухим серым жалом паять тяжело.',
+  },
+];
+
+const desolderingTips = [
+  {
+    title: 'Старый припой не плавится',
+    do: 'Лучше добавить флюс. Если его нет, добавьте свежий припой с канифолью внутри, очистите и залудите жало, затем поднимайте температуру по 10 °C.',
+    avoid: 'Не давите жалом в площадку: так легко оторвать пятак.',
+  },
+  {
+    title: 'Один вывод детали',
+    do: 'Прогрейте вывод и площадку вместе, потом уберите припой отсосом или оплеткой. После этого шевелите вывод только когда он свободен.',
+    avoid: 'Не тяните деталь, пока припой еще держит отверстие.',
+  },
+  {
+    title: 'Разъем или много ножек',
+    do: 'Добавьте свежий припой на все ноги, прогревайте по очереди и убирайте припой частями. Если нет флюса, хотя бы чаще чистите и лудите жало.',
+    avoid: 'Не пытайтесь вырвать разъем за один прогрев.',
+  },
+  {
+    title: 'Земляная площадка забирает тепло',
+    do: 'Поставьте жало шире, добавьте свежий припой и поднимите температуру на 20-40 °C. Если есть флюс или преднагрев платы, используйте их.',
+    avoid: 'Не держите тонкое жало долго на одном месте.',
+  },
 ];
 
 const ohmScenarios = [
@@ -107,7 +239,7 @@ function App() {
   return (
     <main className="min-h-screen px-10 py-8 text-slate-100">
       <div className="mx-auto grid max-w-[1480px] grid-cols-[300px_1fr] gap-8">
-        <aside className="sticky top-8 h-[calc(100vh-4rem)] rounded-[2rem] border border-white/10 bg-slate-950/70 p-6 shadow-2xl backdrop-blur">
+        <aside className="sticky top-8 h-[calc(100vh-4rem)] overflow-y-auto rounded-[2rem] border border-white/10 bg-slate-950/70 p-6 shadow-2xl backdrop-blur">
           <div className="mb-9">
             <div className="mb-4 inline-flex rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-cyan-200">
               <SlidersHorizontal size={28} />
@@ -157,6 +289,7 @@ function App() {
           {activeTab === 'ohm' && <OhmsLawPanel />}
           {activeTab === 'led' && <LedPanel />}
           {activeTab === 'pot' && <PotentiometerPanel />}
+          {activeTab === 'soldering' && <SolderingPanel />}
           {activeTab === 'pcb' && <PcbPanel />}
           {activeTab === 'markings' && <MarkingsPanel />}
           {activeTab === 'resistors' && <ResistorsPanel />}
@@ -415,6 +548,195 @@ function PotentiometerPanel() {
         <Result label="Потенциометр рассеивает до" value={formatNumber(result?.potMaxPower, 'W', 3)} />
       </div>
     </Grid>
+  );
+}
+
+function SolderingPanel() {
+  const boardChoices = [
+    {
+      id: 'leadFreeBoard',
+      title: 'PbF / Pb-Free / LF / RoHS',
+      label: 'Скорее бессвинец',
+      alloyId: 'leadFree',
+      text: 'Современная плата. Обычно нужна температура выше, чистое залуженное жало и хорошая передача тепла.',
+    },
+    {
+      id: 'leadBoard',
+      title: 'SnPb / Pb / старая плата',
+      label: 'Скорее свинцовый',
+      alloyId: 'lead',
+      text: 'Старая техника или прямо указанный SnPb. Плавится легче, температуру можно ниже.',
+    },
+    {
+      id: 'unknownBoard',
+      title: 'Не знаю / ничего нет',
+      label: 'Безопасный старт',
+      alloyId: 'unknown',
+      text: 'Начните умеренно. Если припой не течет, сначала проверьте жало и теплопередачу, потом поднимайте температуру.',
+    },
+  ];
+  const workChoices = [
+    {
+      id: 'normal',
+      title: 'Обычная пайка',
+      taskId: 'throughHole',
+      text: 'Резисторы, конденсаторы, обычные выводы.',
+    },
+    {
+      id: 'delicate',
+      title: 'Мелкое / рядом пластик',
+      taskId: 'smd',
+      text: 'SMD, тонкие площадки, светодиоды, разъемы.',
+    },
+    {
+      id: 'heavy',
+      title: 'Много меди',
+      taskId: 'ground',
+      text: 'Земляной полигон, толстые выводы, разъемы питания.',
+    },
+    {
+      id: 'desoldering',
+      title: 'Выпаиваю деталь',
+      taskId: 'desolder',
+      text: 'Нужно снять компонент, очистить отверстие или убрать лишний припой.',
+    },
+  ];
+  const [boardChoiceId, setBoardChoiceId] = useState('leadFreeBoard');
+  const [workChoiceId, setWorkChoiceId] = useState('normal');
+  const boardChoice = boardChoices.find((item) => item.id === boardChoiceId) ?? boardChoices[0];
+  const workChoice = workChoices.find((item) => item.id === workChoiceId) ?? workChoices[0];
+  const alloy = solderAlloys.find((item) => item.id === boardChoice.alloyId) ?? solderAlloys[0];
+  const task = solderTasks.find((item) => item.id === workChoice.taskId) ?? solderTasks[0];
+  const temperatureRange = calculateSolderingRange(alloy.range, task.adjust);
+  const startTemperature = clampSolderingTemperature(temperatureRange[0] + (workChoice.id === 'normal' ? 10 : 0));
+  const temperatureAdvice = {
+    normal: 'Для обычной пайки сначала проверьте жало: оно должно быть чистым и залуженным. Если припой плохо смачивает площадку, помогает свежий припой или флюс. Температуру поднимайте только постепенно.',
+    delicate: 'Для SMD и пластика рядом не компенсируйте все температурой. Работайте короткими касаниями, чистым жалом и небольшим количеством припоя. Если не смачивает, лучше добавить флюс или свежий припой, а не долго греть.',
+    heavy: 'Для большой земли и толстых выводов проблема чаще не в градусах, а в передаче тепла. Возьмите жало шире, добавьте свежий припой, прогрейте площадку быстрее. Температуру повышайте шагом 10-20 °C.',
+    desoldering: 'При выпайке старый припой часто окислен. Добавьте свежий припой, прогрейте вывод и площадку вместе, затем убирайте припой отсосом или оплеткой. Не тяните деталь, пока припой держит вывод.',
+  }[workChoice.id];
+
+  return (
+    <div className="space-y-6">
+      <Card title="Перед работой: паяльник" wide>
+        <Hint>Перед выбором температуры подготовьте именно жало. Грязное или сухое жало может плохо паять даже при правильных градусах.</Hint>
+        <div className="grid grid-cols-4 gap-3">
+          {solderPrepTips.map((item, index) => (
+            <div key={item.title} className="min-h-[150px] rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+              <div className="mb-4 flex items-center gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-cyan-300/25 bg-cyan-300/10 font-display text-xs font-bold text-cyan-100">
+                  {index + 1}
+                </span>
+                <span className="font-display text-lg font-bold tracking-[-0.04em] text-white">{item.title}</span>
+              </div>
+              <p className="text-sm leading-6 text-slate-300">{item.text}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card title="1. Плата или припой" wide>
+        <Hint>Выберите самое похожее. Для паяльника этого достаточно, чтобы не гадать с температурой.</Hint>
+        <div className="grid grid-cols-3 gap-3">
+          {boardChoices.map((item) => {
+            const active = item.id === boardChoice.id;
+            return (
+              <button
+                key={item.id}
+                className={`min-h-[118px] rounded-2xl border p-4 text-left transition ${
+                  active
+                    ? 'border-cyan-300/50 bg-cyan-300/15 text-cyan-50 shadow-glow'
+                    : 'border-white/10 bg-white/[0.025] text-slate-300 hover:border-cyan-300/25 hover:bg-white/[0.045]'
+                }`}
+                type="button"
+                onClick={() => setBoardChoiceId(item.id)}
+              >
+                <span className="block font-display text-xl font-bold tracking-[-0.05em] text-white">{item.title}</span>
+                <span className="mt-3 inline-flex rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-amber-100">
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-4 min-h-[78px] rounded-2xl border border-white/10 bg-slate-950/55 px-5 py-4">
+          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Что это значит</div>
+          <p className="mt-2 text-sm leading-6 text-slate-300">{boardChoice.text}</p>
+        </div>
+      </Card>
+
+      <Card title="2. Что делаете" wide>
+        <div className="grid grid-cols-4 gap-3">
+          {workChoices.map((item) => {
+            const active = item.id === workChoice.id;
+            return (
+              <button
+                key={item.id}
+                className={`min-h-[104px] rounded-2xl border p-4 text-left transition ${
+                  active
+                    ? 'border-cyan-300/50 bg-cyan-300/15 shadow-glow'
+                    : 'border-white/10 bg-white/[0.025] hover:border-cyan-300/25 hover:bg-white/[0.045]'
+                }`}
+                type="button"
+                onClick={() => setWorkChoiceId(item.id)}
+              >
+                <span className="block font-display text-xl font-bold tracking-[-0.05em] text-white">{item.title}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-4 min-h-[70px] rounded-2xl border border-white/10 bg-slate-950/55 px-5 py-4">
+          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Текущая задача</div>
+          <p className="mt-2 text-sm leading-6 text-slate-300">{workChoice.text}</p>
+        </div>
+      </Card>
+
+      <Card title="Температура паяльника" wide>
+        <div className="grid grid-cols-[320px_minmax(0,1fr)] gap-5">
+          <div className="rounded-[1.5rem] border border-cyan-300/25 bg-cyan-300/[0.08] px-5 py-6">
+            <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-cyan-200">Начните с</div>
+            <div className="mt-3 font-display text-5xl font-bold tracking-[-0.08em] text-white">
+              {startTemperature} °C
+            </div>
+            <div className="mt-4 text-sm leading-6 text-slate-300">Рабочий коридор: {temperatureRange[0]}-{temperatureRange[1]} °C.</div>
+          </div>
+          <div className="flex min-h-[188px] flex-col justify-between rounded-2xl border border-white/10 bg-white/[0.035] px-5 py-5">
+            <p className="max-h-[112px] overflow-y-auto text-sm leading-6 text-slate-300">{temperatureAdvice}</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 text-xs font-semibold text-cyan-100">
+                {workChoice.title}
+              </span>
+              <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-2 text-xs font-semibold text-amber-100">
+                {boardChoice.label}
+              </span>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <Card title="Как выпаивать паяльником" wide>
+        <Hint>При выпайке задача не “жарить сильнее”, а быстро передать тепло и убрать припой, пока площадка не перегрелась.</Hint>
+        <div className="grid grid-cols-2 gap-3">
+          {desolderingTips.map((item) => (
+            <div key={item.title} className="grid min-h-[210px] grid-rows-[auto_minmax(0,1fr)_auto] rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+              <div className="font-display text-lg font-bold tracking-[-0.04em] text-white">{item.title}</div>
+              <p className="mt-3 text-sm leading-6 text-slate-300">{item.do}</p>
+              <p className="mt-3 rounded-xl border border-amber-300/20 bg-amber-300/[0.06] px-3 py-3 text-sm leading-5 text-amber-50">{item.avoid}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card title="Что легко перегреть" wide>
+        <div className="grid grid-cols-5 gap-3">
+          {heatSensitiveParts.map((item) => (
+            <div key={item} className="rounded-2xl border border-amber-300/20 bg-amber-300/[0.06] px-4 py-3 text-sm leading-6 text-amber-50">
+              {item}
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
   );
 }
 
@@ -750,6 +1072,16 @@ function SafetyBox({ title, children }) {
       {children}
     </div>
   );
+}
+
+function calculateSolderingRange(baseRange, adjustment) {
+  const low = clampSolderingTemperature(baseRange[0] + adjustment[0]);
+  const high = clampSolderingTemperature(Math.max(low + 10, baseRange[1] + adjustment[1]));
+  return [low, high];
+}
+
+function clampSolderingTemperature(value) {
+  return Math.min(420, Math.max(180, Math.round(value / 5) * 5));
 }
 
 function colorToCss(color) {
