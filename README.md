@@ -1,7 +1,7 @@
 # RadioCalc
 
-RadioCalc is a simple client-side web app for radio amateurs and electronics projects.
-It helps calculate common electronics values directly in the browser without a backend.
+RadioCalc is a web calculator for radio amateurs and electronics projects.
+It helps choose resistors, calculate PCB traces, decode component markings, estimate soldering temperatures, and check common circuits.
 
 ## Features
 
