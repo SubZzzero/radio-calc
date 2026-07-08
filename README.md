@@ -5,48 +5,18 @@ It helps calculate common electronics values directly in the browser without a b
 
 ## Features
 
-- Ohm's law and power calculator
-- LED resistor calculator with power margin
-- PCB trace width calculator
+- Ohm's law calculator for voltage, current, resistance, and power
+- Load and LED series resistor calculator with power margin
+- Potentiometer selector for adjustable load current
+- Soldering temperature guidance for common alloys and tasks
+- PCB trace width calculator based on IPC-2221
 - Resistor color code and SMD marking decoder
-- Passive filters and voltage divider calculations
+- Standard resistor values for E12 and E24 series
+- Resistor power rating guide
+- Voltage and current divider calculators
+- RC and LC cutoff / resonance calculators
 - Dark, mobile-friendly interface
 
-## Tech Stack
+## Live App
 
-- React
-- Vite
-- Tailwind CSS
-- Lucide React
-
-## Getting Started
-
-Install dependencies:
-
-```bash
-npm install
-```
-
-Run the development server:
-
-```bash
-npm run dev
-```
-
-Build for production:
-
-```bash
-npm run build
-```
-
-Preview the production build:
-
-```bash
-npm run preview
-```
-
-## Deployment
-
-The app builds to the `dist/` folder and can be deployed as a static site, for example to Firebase Hosting.
-
-Live app: https://radio-calc.web.app
+Use the deployed version here: https://radio-calc.web.app
