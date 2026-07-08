@@ -12,8 +12,8 @@
 
 body {
   margin: 0;
-  min-width: 1024px;
   min-height: 100vh;
+  cursor: default;
   background:
     radial-gradient(circle at 12% 12%, rgba(45, 212, 191, 0.2), transparent 28rem),
     radial-gradient(circle at 88% 18%, rgba(245, 158, 11, 0.12), transparent 24rem),
@@ -22,9 +22,15 @@ body {
 }
 
 button,
-input,
 select {
   font: inherit;
+  cursor: pointer;
+}
+
+input,
+textarea {
+  font: inherit;
+  cursor: text;
 }
 
 * {

@@ -237,27 +237,27 @@ function App() {
   const ActiveIcon = tabs.find((tab) => tab.id === activeTab)?.icon ?? Activity;
 
   return (
-    <main className="min-h-screen px-10 py-8 text-slate-100">
-      <div className="mx-auto grid max-w-[1480px] grid-cols-[300px_1fr] gap-8">
-        <aside className="sticky top-8 h-[calc(100vh-4rem)] overflow-y-auto rounded-[2rem] border border-white/10 bg-slate-950/70 p-6 shadow-2xl backdrop-blur">
-          <div className="mb-9">
+    <main className="min-h-screen px-4 py-5 text-slate-100 lg:px-5 lg:py-6 xl:px-8 2xl:px-10 2xl:py-8">
+      <div className="mx-auto grid max-w-[1560px] grid-cols-1 gap-5 lg:grid-cols-[250px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)] 2xl:grid-cols-[300px_minmax(0,1fr)] 2xl:gap-8">
+        <aside className="min-w-0 rounded-[2rem] border border-white/10 bg-slate-950/70 p-4 shadow-2xl backdrop-blur lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)] lg:overflow-y-auto xl:p-5 2xl:p-6">
+          <div className="mb-6 2xl:mb-9">
             <div className="mb-4 inline-flex rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-cyan-200">
               <SlidersHorizontal size={28} />
             </div>
-            <h1 className="font-display text-4xl font-bold tracking-[-0.08em] text-white">RadioCalc</h1>
+            <h1 className="font-display text-3xl font-bold tracking-[-0.08em] text-white 2xl:text-4xl">RadioCalc</h1>
             <p className="mt-3 text-sm leading-6 text-slate-400">
               Desktop-only инженерные калькуляторы для макетирования, пайки и разводки плат.
             </p>
           </div>
 
-          <nav className="space-y-3">
+          <nav className="space-y-2 2xl:space-y-3">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const active = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
-                  className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-4 text-left transition ${
+                  className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition 2xl:px-4 2xl:py-4 ${
                     active
                       ? 'border-cyan-300/40 bg-cyan-300/15 text-cyan-100 shadow-glow'
                       : 'border-white/5 bg-white/[0.03] text-slate-400 hover:border-white/15 hover:text-white'
@@ -273,14 +273,14 @@ function App() {
           </nav>
         </aside>
 
-        <section className="min-h-[860px] rounded-[2rem] border border-white/10 bg-slate-900/55 p-8 shadow-2xl backdrop-blur">
-          <header className="mb-8 border-b border-white/10 pb-6">
+        <section className="min-w-0 rounded-[2rem] border border-white/10 bg-slate-900/55 p-5 shadow-2xl backdrop-blur lg:min-h-[calc(100vh-3rem)] xl:p-6 2xl:p-8">
+          <header className="mb-6 border-b border-white/10 pb-5 2xl:mb-8 2xl:pb-6">
             <div>
               <div className="mb-3 flex items-center gap-3 text-cyan-200">
                 <ActiveIcon size={24} />
                 <span className="font-display text-xs font-bold uppercase tracking-[0.35em]">Практический расчет</span>
               </div>
-              <h2 className="font-display text-5xl font-bold tracking-[-0.07em] text-white">
+              <h2 className="font-display text-4xl font-bold tracking-[-0.07em] text-white 2xl:text-5xl">
                 {tabs.find((tab) => tab.id === activeTab)?.label}
               </h2>
             </div>
@@ -333,7 +333,7 @@ function OhmsLawPanel() {
     <Grid>
       <Card title="Входные параметры" wide>
         <Hint>Сначала выберите, что нужно получить. После этого вводите только подсвеченные исходные данные.</Hint>
-        <div className="mb-6 grid grid-cols-2 gap-3">
+        <div className="mb-6 grid grid-cols-1 gap-3 xl:grid-cols-2">
           {ohmScenarios.map((item) => {
             const active = item.id === scenario.id;
             return (
@@ -359,10 +359,10 @@ function OhmsLawPanel() {
 
         <div className="mb-6 rounded-[1.35rem] border border-cyan-300/20 bg-cyan-300/[0.07] p-5">
           <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-cyan-200">Формула для этого режима</div>
-          <div className="mt-3 font-display text-4xl font-bold tracking-[-0.08em] text-white">{scenario.formula}</div>
+          <div className="mt-3 break-words font-display text-3xl font-bold tracking-[-0.08em] text-white 2xl:text-4xl">{scenario.formula}</div>
         </div>
 
-        <div className="grid grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:gap-5">
           {scenario.fields.map((field) => {
             const meta = ohmFieldMeta[field];
             return (
@@ -393,7 +393,7 @@ function OhmsLawPanel() {
         <div className="mb-5 rounded-[1.5rem] border border-cyan-300/25 bg-cyan-300/[0.08] px-5 py-6">
           <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-cyan-200">Главный ответ</div>
           <div className="mt-3 text-sm text-slate-400">{primary.label}</div>
-          <div className="mt-3 break-words font-display text-4xl font-bold tracking-[-0.08em] text-white">
+          <div className="mt-3 break-words font-display text-3xl font-bold tracking-[-0.08em] text-white 2xl:text-4xl">
             {formatNumber(result?.[scenario.primaryResult], primary.unit)}
           </div>
         </div>
@@ -471,7 +471,7 @@ function LedPanel() {
             Проверить резистор
           </button>
         </div>
-        <div className="grid grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3 2xl:gap-5">
           <Input label="Vs питание" unit="V" value={form.supplyVoltage} onChange={(value) => setForm({ ...form, supplyVoltage: value })} />
           <Input label="U нагрузки" unit="V" value={form.forwardVoltage} onChange={(value) => setForm({ ...form, forwardVoltage: value })} />
           {mode === 'check' ? (
@@ -532,7 +532,7 @@ function PotentiometerPanel() {
       <Card title="Нагрузка + потенциометр" wide>
         <CircuitBox lines={['+Vs ── R защитный ── POT ── нагрузка ── GND']} />
         <Hint>0% ручки = большое сопротивление и малый ток. 100% ручки = потенциометр почти 0 Ω, ток максимальный через защитный резистор.</Hint>
-        <div className="grid grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 gap-4 xl:grid-cols-4 2xl:gap-5">
           <Input label="Vs питание" unit="V" value={form.supplyVoltage} onChange={(value) => setForm({ ...form, supplyVoltage: value })} />
           <Input label="U нагрузки" unit="V" value={form.forwardVoltage} onChange={(value) => setForm({ ...form, forwardVoltage: value })} />
           <Input label="Защитный R" unit="Ω" value={form.fixedResistance} onChange={(value) => setForm({ ...form, fixedResistance: value })} />
@@ -620,9 +620,9 @@ function SolderingPanel() {
     <div className="space-y-6">
       <Card title="Перед работой: паяльник" wide>
         <Hint>Перед выбором температуры подготовьте именно жало. Грязное или сухое жало может плохо паять даже при правильных градусах.</Hint>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 gap-3 2xl:grid-cols-4">
           {solderPrepTips.map((item, index) => (
-            <div key={item.title} className="min-h-[150px] rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+            <div key={item.title} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4 2xl:min-h-[150px]">
               <div className="mb-4 flex items-center gap-3">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-cyan-300/25 bg-cyan-300/10 font-display text-xs font-bold text-cyan-100">
                   {index + 1}
@@ -637,13 +637,13 @@ function SolderingPanel() {
 
       <Card title="1. Плата или припой" wide>
         <Hint>Выберите самое похожее. Для паяльника этого достаточно, чтобы не гадать с температурой.</Hint>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
           {boardChoices.map((item) => {
             const active = item.id === boardChoice.id;
             return (
               <button
                 key={item.id}
-                className={`min-h-[118px] rounded-2xl border p-4 text-left transition ${
+                className={`rounded-2xl border p-4 text-left transition 2xl:min-h-[118px] ${
                   active
                     ? 'border-cyan-300/50 bg-cyan-300/15 text-cyan-50 shadow-glow'
                     : 'border-white/10 bg-white/[0.025] text-slate-300 hover:border-cyan-300/25 hover:bg-white/[0.045]'
@@ -666,13 +666,13 @@ function SolderingPanel() {
       </Card>
 
       <Card title="2. Что делаете" wide>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 gap-3 2xl:grid-cols-4">
           {workChoices.map((item) => {
             const active = item.id === workChoice.id;
             return (
               <button
                 key={item.id}
-                className={`min-h-[104px] rounded-2xl border p-4 text-left transition ${
+                className={`rounded-2xl border p-4 text-left transition 2xl:min-h-[104px] ${
                   active
                     ? 'border-cyan-300/50 bg-cyan-300/15 shadow-glow'
                     : 'border-white/10 bg-white/[0.025] hover:border-cyan-300/25 hover:bg-white/[0.045]'
@@ -692,16 +692,16 @@ function SolderingPanel() {
       </Card>
 
       <Card title="Температура паяльника" wide>
-        <div className="grid grid-cols-[320px_minmax(0,1fr)] gap-5">
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[300px_minmax(0,1fr)] 2xl:grid-cols-[320px_minmax(0,1fr)]">
           <div className="rounded-[1.5rem] border border-cyan-300/25 bg-cyan-300/[0.08] px-5 py-6">
             <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-cyan-200">Начните с</div>
-            <div className="mt-3 font-display text-5xl font-bold tracking-[-0.08em] text-white">
+            <div className="mt-3 font-display text-4xl font-bold tracking-[-0.08em] text-white 2xl:text-5xl">
               {startTemperature} °C
             </div>
             <div className="mt-4 text-sm leading-6 text-slate-300">Рабочий коридор: {temperatureRange[0]}-{temperatureRange[1]} °C.</div>
           </div>
-          <div className="flex min-h-[188px] flex-col justify-between rounded-2xl border border-white/10 bg-white/[0.035] px-5 py-5">
-            <p className="max-h-[112px] overflow-y-auto text-sm leading-6 text-slate-300">{temperatureAdvice}</p>
+          <div className="flex flex-col justify-between rounded-2xl border border-white/10 bg-white/[0.035] px-5 py-5 2xl:min-h-[188px]">
+            <p className="text-sm leading-6 text-slate-300 2xl:max-h-[112px] 2xl:overflow-y-auto">{temperatureAdvice}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 text-xs font-semibold text-cyan-100">
                 {workChoice.title}
@@ -716,9 +716,9 @@ function SolderingPanel() {
 
       <Card title="Как выпаивать паяльником" wide>
         <Hint>При выпайке задача не “жарить сильнее”, а быстро передать тепло и убрать припой, пока площадка не перегрелась.</Hint>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           {desolderingTips.map((item) => (
-            <div key={item.title} className="grid min-h-[210px] grid-rows-[auto_minmax(0,1fr)_auto] rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+            <div key={item.title} className="grid rounded-2xl border border-white/10 bg-white/[0.035] p-4 2xl:min-h-[210px] 2xl:grid-rows-[auto_minmax(0,1fr)_auto]">
               <div className="font-display text-lg font-bold tracking-[-0.04em] text-white">{item.title}</div>
               <p className="mt-3 text-sm leading-6 text-slate-300">{item.do}</p>
               <p className="mt-3 rounded-xl border border-amber-300/20 bg-amber-300/[0.06] px-3 py-3 text-sm leading-5 text-amber-50">{item.avoid}</p>
@@ -728,7 +728,7 @@ function SolderingPanel() {
       </Card>
 
       <Card title="Что легко перегреть" wide>
-        <div className="grid grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
           {heatSensitiveParts.map((item) => (
             <div key={item} className="rounded-2xl border border-amber-300/20 bg-amber-300/[0.06] px-4 py-3 text-sm leading-6 text-amber-50">
               {item}
@@ -753,7 +753,7 @@ function PcbPanel() {
     <Grid>
       <Card title="Параметры дорожки" wide>
         <Hint>Для платы берите округленную ширину вверх.</Hint>
-        <div className="grid grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 gap-4 xl:grid-cols-4 2xl:gap-5">
           <Input label="Ток" unit="A" value={form.current} onChange={(value) => setForm({ ...form, current: value })} />
           <Select label="Медь" value={form.copperMicrons} onChange={(value) => setForm({ ...form, copperMicrons: value })} options={['18', '35', '70']} suffix="мкм" />
           <Select label="Нагрев" value={form.temperatureRise} onChange={(value) => setForm({ ...form, temperatureRise: value })} options={['10', '20', '30']} suffix="°C" />
@@ -781,10 +781,10 @@ function MarkingsPanel() {
   const smdResult = decodeSmdCode(smd);
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_420px] gap-6">
+    <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_420px] 2xl:gap-6">
       <Card title="Цветовые кольца" wide>
         <Hint>4 или 5 полос: цифры, множитель, допуск.</Hint>
-        <div className="grid grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 gap-4 xl:grid-cols-5">
           {[0, 1, 2, 3, 4].map((index) => (
             <Select
               key={index}
@@ -830,13 +830,13 @@ function ResistorsPanel() {
     <Grid>
       <Card title="Стандартные номиналы" wide>
         <Hint>E12 чаще встречается в простых наборах. E24 дает больше промежуточных значений, например 51 Ω.</Hint>
-        <div className="mb-6 grid grid-cols-2 gap-5">
+        <div className="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:gap-5">
           <Select label="Ряд" value={series} onChange={setSeries} options={['E24', 'E12']} />
           <Select label="Диапазон" value={decade} onChange={setDecade} options={resistorDecades} />
         </div>
-        <div className="grid grid-cols-3 gap-5 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 xl:grid-cols-3 2xl:grid-cols-4 2xl:gap-5">
           {values.map((value) => (
-            <div key={value} className="min-w-0 whitespace-nowrap rounded-[1.25rem] border border-cyan-300/10 bg-white/[0.035] px-5 py-6 text-center font-display text-xl font-bold leading-7 text-cyan-50">
+            <div key={value} className="min-w-0 break-words rounded-[1.25rem] border border-cyan-300/10 bg-white/[0.035] px-4 py-5 text-center font-display text-lg font-bold leading-7 text-cyan-50 2xl:px-5 2xl:py-6 2xl:text-xl">
               {formatNumber(value, 'Ω')}
             </div>
           ))}
@@ -883,7 +883,7 @@ function DividersPanel() {
   const voltageRatio = voltageDividerResult ? voltageDividerResult.vout / toNumber(voltageForm.vin) : null;
 
   return (
-    <div className="grid grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 gap-5 xl:grid-cols-2 2xl:gap-6">
       <Card title="Делитель напряжения: R1 + R2">
         <CircuitBox lines={['Вход ── R1 ──●── R2 ── GND', '             │', '           Выход']} />
         <Hint>Последовательные резисторы делят напряжение.</Hint>
@@ -892,7 +892,7 @@ function DividersPanel() {
           <Input label="R1 верхний" unit="Ω" value={voltageForm.r1} onChange={(value) => setVoltageForm({ ...voltageForm, r1: value })} />
           <Input label="R2 нижний" unit="Ω" value={voltageForm.r2} onChange={(value) => setVoltageForm({ ...voltageForm, r2: value })} />
         </div>
-        <div className="mt-5 grid grid-cols-2 gap-3">
+        <div className="mt-5 grid grid-cols-1 gap-3 2xl:grid-cols-2">
           <Result label="Выходное напряжение" value={formatNumber(voltageDividerResult?.vout, 'V')} accent />
           <Result label="Коэффициент" value={Number.isFinite(voltageRatio) ? `${formatNumber(voltageRatio * 100, '%')}` : '—'} />
           <Result label="Ток цепи" value={formatNumber(voltageDividerResult?.current, 'A')} />
@@ -917,7 +917,7 @@ function DividersPanel() {
           <Input label="R1 ветвь" unit="Ω" value={currentForm.r1} onChange={(value) => setCurrentForm({ ...currentForm, r1: value })} />
           <Input label="R2 ветвь" unit="Ω" value={currentForm.r2} onChange={(value) => setCurrentForm({ ...currentForm, r2: value })} />
         </div>
-        <div className="mt-5 grid grid-cols-2 gap-3">
+        <div className="mt-5 grid grid-cols-1 gap-3 2xl:grid-cols-2">
           <Result label="Ток через R1" value={formatNumber(currentDividerResult?.i1, 'A')} accent />
           <Result label="Ток через R2" value={formatNumber(currentDividerResult?.i2, 'A')} accent />
           <Result label="R эквивалент" value={formatNumber(currentDividerResult?.equivalentResistance, 'Ω')} />
@@ -940,13 +940,13 @@ function FiltersPanel() {
     <Grid>
       <Card title="RC / LC фильтры" wide>
         <Hint>RC и LC считают частоту среза / резонанса.</Hint>
-        <div className="grid grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:gap-5">
           <Input label="R" unit="Ω" value={form.r} onChange={(value) => setForm({ ...form, r: value })} />
           <Input label="C" unit="µF" value={form.c} onChange={(value) => setForm({ ...form, c: value })} />
           <Input label="L" unit="µH" value={form.l} onChange={(value) => setForm({ ...form, l: value })} />
           <Input label="C" unit="nF" value={form.cnf} onChange={(value) => setForm({ ...form, cnf: value })} />
         </div>
-        <div className="mt-6 grid grid-cols-2 gap-5">
+        <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:gap-5">
           <Result label="RC частота среза" value={formatNumber(rc, 'Hz')} accent />
           <Result label="LC резонанс / срез" value={formatNumber(lc, 'Hz')} accent />
         </div>
@@ -968,12 +968,12 @@ function FiltersPanel() {
 }
 
 function Grid({ children }) {
-  return <div className="grid grid-cols-[1.35fr_0.9fr] gap-6">{children}</div>;
+  return <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.35fr_0.9fr] 2xl:gap-6">{children}</div>;
 }
 
 function Card({ title, children, wide = false }) {
   return (
-    <article className={`rounded-[1.5rem] border border-white/10 bg-slate-950/55 p-6 ${wide ? '' : 'self-start'}`}>
+    <article className={`min-w-0 rounded-[1.5rem] border border-white/10 bg-slate-950/55 p-5 2xl:p-6 ${wide ? '' : 'self-start'}`}>
       <h3 className="mb-5 font-display text-sm font-bold uppercase tracking-[0.2em] text-slate-300">{title}</h3>
       {children}
     </article>
@@ -1002,11 +1002,11 @@ function Input({ label, unit, value, onChange }) {
 
 function InputWithUnitSelect({ label, value, onChange, unit, units, onUnitChange }) {
   return (
-    <label className="block">
+    <label className="block min-w-0">
       <span className="mb-2 block text-sm font-medium text-slate-400">{label}</span>
-      <div className="grid grid-cols-[1fr_86px] overflow-hidden rounded-xl border border-cyan-300/10 bg-slate-950/70 transition focus-within:border-cyan-300/50 focus-within:shadow-glow">
+      <div className="grid grid-cols-[minmax(0,1fr)_86px] overflow-hidden rounded-xl border border-cyan-300/10 bg-slate-950/70 transition focus-within:border-cyan-300/50 focus-within:shadow-glow">
         <input
-          className="w-full bg-transparent px-4 py-3 font-display text-lg text-cyan-50 outline-none"
+          className="min-w-0 bg-transparent px-4 py-3 font-display text-lg text-cyan-50 outline-none"
           value={value}
           onChange={(event) => onChange(event.target.value)}
         />
@@ -1027,7 +1027,7 @@ function InputWithUnitSelect({ label, value, onChange, unit, units, onUnitChange
 function Select({ label, value, onChange, options, suffix }) {
   const normalized = useMemo(() => options.map((option) => (Array.isArray(option) ? option : [option, `${option}${suffix ? ` ${suffix}` : ''}`])), [options, suffix]);
   return (
-    <label className="block">
+    <label className="block min-w-0">
       <span className="mb-2 block text-sm font-medium text-slate-400">{label}</span>
       <select className={fieldClass} value={value} onChange={(event) => onChange(event.target.value)}>
         {normalized.map(([optionValue, labelText]) => (
@@ -1042,7 +1042,7 @@ function Result({ label, value, accent = false }) {
   return (
     <div className="mb-3 min-w-0 rounded-2xl border border-white/10 bg-white/[0.035] px-5 py-5">
       <div className="break-words text-[11px] font-semibold uppercase leading-4 tracking-normal text-slate-500">{label}</div>
-      <div className={`mt-4 break-words font-display text-[22px] font-bold leading-7 ${accent ? 'text-cyan-200' : 'text-white'}`}>{value}</div>
+      <div className={`mt-4 break-words font-display text-xl font-bold leading-7 2xl:text-[22px] ${accent ? 'text-cyan-200' : 'text-white'}`}>{value}</div>
     </div>
   );
 }
@@ -1057,7 +1057,7 @@ function Hint({ children }) {
 
 function CircuitBox({ lines }) {
   return (
-    <pre className="mb-4 overflow-hidden rounded-xl border border-cyan-300/15 bg-slate-950/60 px-4 py-3 font-display text-sm leading-6 text-cyan-100">
+    <pre className="mb-4 overflow-x-auto rounded-xl border border-cyan-300/15 bg-slate-950/60 px-4 py-3 font-display text-sm leading-6 text-cyan-100">
       {lines.join('\n')}
     </pre>
   );
