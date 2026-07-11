@@ -230,34 +230,36 @@ const ohmResultMeta = {
 };
 
 const fieldClass =
-  'w-full rounded-xl border border-cyan-300/10 bg-slate-950/70 px-4 py-3 font-display text-lg text-cyan-50 outline-none transition focus:border-cyan-300/50 focus:shadow-glow';
+  'w-full rounded-xl border border-cyan-300/10 bg-slate-950/70 px-3 py-3 font-display text-base text-cyan-50 outline-none transition focus:border-cyan-300/50 focus:shadow-glow sm:px-4 sm:text-lg';
 
 function App() {
   const [activeTab, setActiveTab] = useState('ohm');
   const ActiveIcon = tabs.find((tab) => tab.id === activeTab)?.icon ?? Activity;
 
   return (
-    <main className="min-h-screen px-4 py-5 text-slate-100 lg:px-5 lg:py-6 xl:px-8 2xl:px-10 2xl:py-8">
-      <div className="mx-auto grid max-w-[1560px] grid-cols-1 gap-5 lg:grid-cols-[250px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)] 2xl:grid-cols-[300px_minmax(0,1fr)] 2xl:gap-8">
-        <aside className="min-w-0 rounded-[2rem] border border-white/10 bg-slate-950/70 p-4 shadow-2xl backdrop-blur lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)] lg:overflow-y-auto xl:p-5 2xl:p-6">
-          <div className="mb-6 2xl:mb-9">
-            <div className="mb-4 inline-flex rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-cyan-200">
-              <SlidersHorizontal size={28} />
+    <main className="min-h-screen px-3 py-3 text-slate-100 sm:px-4 sm:py-5 lg:px-5 lg:py-6 xl:px-8 2xl:px-10 2xl:py-8">
+      <div className="mx-auto grid max-w-[1560px] grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-[250px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)] 2xl:grid-cols-[300px_minmax(0,1fr)] 2xl:gap-8">
+        <aside className="min-w-0 rounded-[1.5rem] border border-white/10 bg-slate-950/70 p-3 shadow-2xl backdrop-blur sm:p-4 lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)] lg:overflow-y-auto lg:rounded-[2rem] xl:p-5 2xl:p-6">
+          <div className="mb-4 flex items-center gap-3 lg:mb-6 lg:block 2xl:mb-9">
+            <div className="inline-flex shrink-0 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-2.5 text-cyan-200 lg:mb-4 lg:p-3">
+              <SlidersHorizontal size={24} />
             </div>
-            <h1 className="font-display text-3xl font-bold tracking-[-0.08em] text-white 2xl:text-4xl">RadioCalc</h1>
-            <p className="mt-3 text-sm leading-6 text-slate-400">
-              Desktop-only инженерные калькуляторы для макетирования, пайки и разводки плат.
-            </p>
+            <div className="min-w-0">
+              <h1 className="font-display text-2xl font-bold tracking-[-0.08em] text-white sm:text-3xl 2xl:text-4xl">RadioCalc</h1>
+              <p className="mt-1 text-xs leading-5 text-slate-400 sm:text-sm lg:mt-3">
+                Инженерные калькуляторы для макетирования, пайки и разводки плат.
+              </p>
+            </div>
           </div>
 
-          <nav className="space-y-2 2xl:space-y-3">
+          <nav className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 lg:mx-0 lg:block lg:space-y-2 lg:overflow-visible lg:px-0 lg:pb-0 2xl:space-y-3">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const active = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
-                  className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition 2xl:px-4 2xl:py-4 ${
+                  className={`flex shrink-0 items-center gap-2 rounded-2xl border px-3 py-2.5 text-left transition lg:w-full lg:gap-3 lg:py-3 2xl:px-4 2xl:py-4 ${
                     active
                       ? 'border-cyan-300/40 bg-cyan-300/15 text-cyan-100 shadow-glow'
                       : 'border-white/5 bg-white/[0.03] text-slate-400 hover:border-white/15 hover:text-white'
@@ -265,22 +267,22 @@ function App() {
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
                 >
-                  <Icon size={20} />
-                  <span className="font-display text-sm font-semibold uppercase tracking-[0.12em]">{tab.label}</span>
+                  <Icon className="shrink-0" size={18} />
+                  <span className="whitespace-nowrap font-display text-xs font-semibold uppercase tracking-[0.1em] sm:text-sm lg:tracking-[0.12em]">{tab.label}</span>
                 </button>
               );
             })}
           </nav>
         </aside>
 
-        <section className="min-w-0 rounded-[2rem] border border-white/10 bg-slate-900/55 p-5 shadow-2xl backdrop-blur lg:min-h-[calc(100vh-3rem)] xl:p-6 2xl:p-8">
-          <header className="mb-6 border-b border-white/10 pb-5 2xl:mb-8 2xl:pb-6">
+        <section className="min-w-0 rounded-[1.5rem] border border-white/10 bg-slate-900/55 p-4 shadow-2xl backdrop-blur sm:p-5 lg:min-h-[calc(100vh-3rem)] lg:rounded-[2rem] xl:p-6 2xl:p-8">
+          <header className="mb-5 border-b border-white/10 pb-4 2xl:mb-8 2xl:pb-6">
             <div>
-              <div className="mb-3 flex items-center gap-3 text-cyan-200">
-                <ActiveIcon size={24} />
-                <span className="font-display text-xs font-bold uppercase tracking-[0.35em]">Практический расчет</span>
+              <div className="mb-3 flex items-center gap-2 text-cyan-200 sm:gap-3">
+                <ActiveIcon className="shrink-0" size={22} />
+                <span className="font-display text-[11px] font-bold uppercase tracking-[0.22em] sm:text-xs sm:tracking-[0.35em]">Практический расчет</span>
               </div>
-              <h2 className="font-display text-4xl font-bold tracking-[-0.07em] text-white 2xl:text-5xl">
+              <h2 className="font-display text-3xl font-bold tracking-[-0.07em] text-white sm:text-4xl 2xl:text-5xl">
                 {tabs.find((tab) => tab.id === activeTab)?.label}
               </h2>
             </div>
@@ -357,9 +359,9 @@ function OhmsLawPanel() {
           })}
         </div>
 
-        <div className="mb-6 rounded-[1.35rem] border border-cyan-300/20 bg-cyan-300/[0.07] p-5">
-          <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-cyan-200">Формула для этого режима</div>
-          <div className="mt-3 break-words font-display text-3xl font-bold tracking-[-0.08em] text-white 2xl:text-4xl">{scenario.formula}</div>
+        <div className="mb-6 rounded-[1.35rem] border border-cyan-300/20 bg-cyan-300/[0.07] p-4 sm:p-5">
+          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-200 sm:tracking-[0.24em]">Формула для этого режима</div>
+          <div className="mt-3 break-words font-display text-2xl font-bold tracking-[-0.08em] text-white sm:text-3xl 2xl:text-4xl">{scenario.formula}</div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:gap-5">
@@ -390,10 +392,10 @@ function OhmsLawPanel() {
         </div>
       </Card>
       <Card title="Результат">
-        <div className="mb-5 rounded-[1.5rem] border border-cyan-300/25 bg-cyan-300/[0.08] px-5 py-6">
-          <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-cyan-200">Главный ответ</div>
+        <div className="mb-5 rounded-[1.5rem] border border-cyan-300/25 bg-cyan-300/[0.08] px-4 py-5 sm:px-5 sm:py-6">
+          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-200 sm:tracking-[0.24em]">Главный ответ</div>
           <div className="mt-3 text-sm text-slate-400">{primary.label}</div>
-          <div className="mt-3 break-words font-display text-3xl font-bold tracking-[-0.08em] text-white 2xl:text-4xl">
+          <div className="mt-3 break-words font-display text-2xl font-bold tracking-[-0.08em] text-white sm:text-3xl 2xl:text-4xl">
             {formatNumber(result?.[scenario.primaryResult], primary.unit)}
           </div>
         </div>
@@ -451,7 +453,7 @@ function LedPanel() {
       <Card title="Последовательная цепь" wide>
         <CircuitBox lines={['+Vs ── R ── нагрузка ── GND']} />
         <Hint>Подходит для LED и других последовательных нагрузок, если известно падение напряжения на нагрузке.</Hint>
-        <div className="mb-5 grid grid-cols-2 gap-3 rounded-2xl border border-white/10 bg-white/[0.025] p-2">
+        <div className="mb-5 grid grid-cols-1 gap-2 rounded-2xl border border-white/10 bg-white/[0.025] p-2 sm:grid-cols-2 sm:gap-3">
           <button
             className={`rounded-xl px-4 py-3 text-left font-display text-sm font-semibold uppercase tracking-[0.12em] transition ${
               mode === 'pick' ? 'bg-cyan-300/15 text-cyan-100 shadow-glow' : 'text-slate-500 hover:text-white'
@@ -489,8 +491,8 @@ function LedPanel() {
         </div>
       </Card>
       {mode === 'check' ? (
-        <div className="rounded-[1.5rem] border border-amber-300/60 bg-slate-950/55 p-6">
-          <h3 className="mb-5 font-display text-sm font-bold uppercase tracking-[0.2em] text-amber-100">Итог</h3>
+        <div className="rounded-[1.5rem] border border-amber-300/60 bg-slate-950/55 p-5 sm:p-6">
+          <h3 className="mb-5 font-display text-sm font-bold uppercase tracking-[0.16em] text-amber-100 sm:tracking-[0.2em]">Итог</h3>
           <Result label="На нагрузке будет примерно" value={formatNumber(checkResult?.ledVoltage, 'V')} />
           <Result label="На резисторе останется" value={formatNumber(checkResult?.voltageOnResistor, 'V')} />
           <Result label="Мощность резистора" value={formatNumber(checkResult?.powerRecommendation?.recommended, 'W')} accent />
@@ -498,8 +500,8 @@ function LedPanel() {
           <Result label="Резистор рассеивает" value={formatNumber(checkResult?.power, 'W', 3)} />
         </div>
       ) : (
-        <div className="rounded-[1.5rem] border border-amber-300/60 bg-slate-950/55 p-6">
-          <h3 className="mb-5 font-display text-sm font-bold uppercase tracking-[0.2em] text-amber-100">Итог</h3>
+        <div className="rounded-[1.5rem] border border-amber-300/60 bg-slate-950/55 p-5 sm:p-6">
+          <h3 className="mb-5 font-display text-sm font-bold uppercase tracking-[0.16em] text-amber-100 sm:tracking-[0.2em]">Итог</h3>
           <Result label="На нагрузке принято" value={formatNumber(ledVoltage, 'V')} />
           <Result label="На резисторе останется" value={formatNumber(pickResult?.voltageOnResistor, 'V')} />
           <Result label="Ставить резистор" value={formatNumber(pickResult?.standardResistance, 'Ω')} accent />
@@ -532,15 +534,15 @@ function PotentiometerPanel() {
       <Card title="Нагрузка + потенциометр" wide>
         <CircuitBox lines={['+Vs ── R защитный ── POT ── нагрузка ── GND']} />
         <Hint>0% ручки = большое сопротивление и малый ток. 100% ручки = потенциометр почти 0 Ω, ток максимальный через защитный резистор.</Hint>
-        <div className="grid grid-cols-2 gap-4 xl:grid-cols-4 2xl:gap-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:gap-5">
           <Input label="Vs питание" unit="V" value={form.supplyVoltage} onChange={(value) => setForm({ ...form, supplyVoltage: value })} />
           <Input label="U нагрузки" unit="V" value={form.forwardVoltage} onChange={(value) => setForm({ ...form, forwardVoltage: value })} />
           <Input label="Защитный R" unit="Ω" value={form.fixedResistance} onChange={(value) => setForm({ ...form, fixedResistance: value })} />
           <Input label="Минимальный ток" unit="mA" value={form.minCurrentMa} onChange={(value) => setForm({ ...form, minCurrentMa: value })} />
         </div>
       </Card>
-      <div className="rounded-[1.5rem] border border-amber-300/60 bg-slate-950/55 p-6">
-        <h3 className="mb-5 font-display text-sm font-bold uppercase tracking-[0.2em] text-amber-100">Итог</h3>
+      <div className="rounded-[1.5rem] border border-amber-300/60 bg-slate-950/55 p-5 sm:p-6">
+        <h3 className="mb-5 font-display text-sm font-bold uppercase tracking-[0.16em] text-amber-100 sm:tracking-[0.2em]">Итог</h3>
         <Result label="Ставить потенциометр" value={formatNumber(result?.recommendedPotentiometer, 'Ω')} accent />
         <Result label="Ток нагрузки на минимуме" value={formatNumber(result?.minCurrent * 1_000, 'mA', 1)} />
         <Result label="Ток нагрузки на максимуме" value={formatNumber(result?.maxCurrent * 1_000, 'mA', 1)} />
@@ -620,7 +622,7 @@ function SolderingPanel() {
     <div className="space-y-6">
       <Card title="Перед работой: паяльник" wide>
         <Hint>Перед выбором температуры подготовьте именно жало. Грязное или сухое жало может плохо паять даже при правильных градусах.</Hint>
-        <div className="grid grid-cols-2 gap-3 2xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4">
           {solderPrepTips.map((item, index) => (
             <div key={item.title} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4 2xl:min-h-[150px]">
               <div className="mb-4 flex items-center gap-3">
@@ -666,7 +668,7 @@ function SolderingPanel() {
       </Card>
 
       <Card title="2. Что делаете" wide>
-        <div className="grid grid-cols-2 gap-3 2xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4">
           {workChoices.map((item) => {
             const active = item.id === workChoice.id;
             return (
@@ -693,9 +695,9 @@ function SolderingPanel() {
 
       <Card title="Температура паяльника" wide>
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[300px_minmax(0,1fr)] 2xl:grid-cols-[320px_minmax(0,1fr)]">
-          <div className="rounded-[1.5rem] border border-cyan-300/25 bg-cyan-300/[0.08] px-5 py-6">
-            <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-cyan-200">Начните с</div>
-            <div className="mt-3 font-display text-4xl font-bold tracking-[-0.08em] text-white 2xl:text-5xl">
+          <div className="rounded-[1.5rem] border border-cyan-300/25 bg-cyan-300/[0.08] px-4 py-5 sm:px-5 sm:py-6">
+            <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-200 sm:tracking-[0.24em]">Начните с</div>
+            <div className="mt-3 font-display text-3xl font-bold tracking-[-0.08em] text-white sm:text-4xl 2xl:text-5xl">
               {startTemperature} °C
             </div>
             <div className="mt-4 text-sm leading-6 text-slate-300">Рабочий коридор: {temperatureRange[0]}-{temperatureRange[1]} °C.</div>
@@ -728,7 +730,7 @@ function SolderingPanel() {
       </Card>
 
       <Card title="Что легко перегреть" wide>
-        <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
           {heatSensitiveParts.map((item) => (
             <div key={item} className="rounded-2xl border border-amber-300/20 bg-amber-300/[0.06] px-4 py-3 text-sm leading-6 text-amber-50">
               {item}
@@ -753,7 +755,7 @@ function PcbPanel() {
     <Grid>
       <Card title="Параметры дорожки" wide>
         <Hint>Для платы берите округленную ширину вверх.</Hint>
-        <div className="grid grid-cols-2 gap-4 xl:grid-cols-4 2xl:gap-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:gap-5">
           <Input label="Ток" unit="A" value={form.current} onChange={(value) => setForm({ ...form, current: value })} />
           <Select label="Медь" value={form.copperMicrons} onChange={(value) => setForm({ ...form, copperMicrons: value })} options={['18', '35', '70']} suffix="мкм" />
           <Select label="Нагрев" value={form.temperatureRise} onChange={(value) => setForm({ ...form, temperatureRise: value })} options={['10', '20', '30']} suffix="°C" />
@@ -784,7 +786,7 @@ function MarkingsPanel() {
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_420px] 2xl:gap-6">
       <Card title="Цветовые кольца" wide>
         <Hint>4 или 5 полос: цифры, множитель, допуск.</Hint>
-        <div className="grid grid-cols-2 gap-4 xl:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
           {[0, 1, 2, 3, 4].map((index) => (
             <Select
               key={index}
@@ -834,9 +836,9 @@ function ResistorsPanel() {
           <Select label="Ряд" value={series} onChange={setSeries} options={['E24', 'E12']} />
           <Select label="Диапазон" value={decade} onChange={setDecade} options={resistorDecades} />
         </div>
-        <div className="grid grid-cols-2 gap-4 xl:grid-cols-3 2xl:grid-cols-4 2xl:gap-5">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3 2xl:grid-cols-4 2xl:gap-5">
           {values.map((value) => (
-            <div key={value} className="min-w-0 break-words rounded-[1.25rem] border border-cyan-300/10 bg-white/[0.035] px-4 py-5 text-center font-display text-lg font-bold leading-7 text-cyan-50 2xl:px-5 2xl:py-6 2xl:text-xl">
+            <div key={value} className="min-w-0 break-words rounded-[1.25rem] border border-cyan-300/10 bg-white/[0.035] px-3 py-4 text-center font-display text-base font-bold leading-7 text-cyan-50 sm:px-4 sm:py-5 sm:text-lg 2xl:px-5 2xl:py-6 2xl:text-xl">
               {formatNumber(value, 'Ω')}
             </div>
           ))}
@@ -968,13 +970,13 @@ function FiltersPanel() {
 }
 
 function Grid({ children }) {
-  return <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.35fr_0.9fr] 2xl:gap-6">{children}</div>;
+  return <div className="grid grid-cols-1 gap-4 sm:gap-5 xl:grid-cols-[1.35fr_0.9fr] 2xl:gap-6">{children}</div>;
 }
 
 function Card({ title, children, wide = false }) {
   return (
-    <article className={`min-w-0 rounded-[1.5rem] border border-white/10 bg-slate-950/55 p-5 2xl:p-6 ${wide ? '' : 'self-start'}`}>
-      <h3 className="mb-5 font-display text-sm font-bold uppercase tracking-[0.2em] text-slate-300">{title}</h3>
+    <article className={`min-w-0 rounded-[1.5rem] border border-white/10 bg-slate-950/55 p-4 sm:p-5 2xl:p-6 ${wide ? '' : 'self-start'}`}>
+      <h3 className="mb-5 break-words font-display text-xs font-bold uppercase tracking-[0.16em] text-slate-300 sm:text-sm sm:tracking-[0.2em]">{title}</h3>
       {children}
     </article>
   );
@@ -985,9 +987,9 @@ function Input({ label, unit, value, onChange }) {
     <label className="block min-w-0">
       <span className="mb-2 block text-sm font-medium text-slate-400">{label}</span>
       {unit ? (
-        <div className="grid grid-cols-[minmax(0,1fr)_52px] overflow-hidden rounded-xl border border-cyan-300/10 bg-slate-950/70 transition focus-within:border-cyan-300/50 focus-within:shadow-glow">
+        <div className="grid grid-cols-[minmax(0,1fr)_48px] overflow-hidden rounded-xl border border-cyan-300/10 bg-slate-950/70 transition focus-within:border-cyan-300/50 focus-within:shadow-glow sm:grid-cols-[minmax(0,1fr)_52px]">
           <input
-            className="min-w-0 bg-transparent px-4 py-3 font-display text-lg text-cyan-50 outline-none"
+            className="min-w-0 bg-transparent px-3 py-3 font-display text-base text-cyan-50 outline-none sm:px-4 sm:text-lg"
             value={value}
             onChange={(event) => onChange(event.target.value)}
           />
@@ -1004,9 +1006,9 @@ function InputWithUnitSelect({ label, value, onChange, unit, units, onUnitChange
   return (
     <label className="block min-w-0">
       <span className="mb-2 block text-sm font-medium text-slate-400">{label}</span>
-      <div className="grid grid-cols-[minmax(0,1fr)_86px] overflow-hidden rounded-xl border border-cyan-300/10 bg-slate-950/70 transition focus-within:border-cyan-300/50 focus-within:shadow-glow">
+      <div className="grid grid-cols-[minmax(0,1fr)_74px] overflow-hidden rounded-xl border border-cyan-300/10 bg-slate-950/70 transition focus-within:border-cyan-300/50 focus-within:shadow-glow sm:grid-cols-[minmax(0,1fr)_86px]">
         <input
-          className="min-w-0 bg-transparent px-4 py-3 font-display text-lg text-cyan-50 outline-none"
+          className="min-w-0 bg-transparent px-3 py-3 font-display text-base text-cyan-50 outline-none sm:px-4 sm:text-lg"
           value={value}
           onChange={(event) => onChange(event.target.value)}
         />
@@ -1040,9 +1042,9 @@ function Select({ label, value, onChange, options, suffix }) {
 
 function Result({ label, value, accent = false }) {
   return (
-    <div className="mb-3 min-w-0 rounded-2xl border border-white/10 bg-white/[0.035] px-5 py-5">
+    <div className="mb-3 min-w-0 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 sm:px-5 sm:py-5">
       <div className="break-words text-[11px] font-semibold uppercase leading-4 tracking-normal text-slate-500">{label}</div>
-      <div className={`mt-4 break-words font-display text-xl font-bold leading-7 2xl:text-[22px] ${accent ? 'text-cyan-200' : 'text-white'}`}>{value}</div>
+      <div className={`mt-3 break-words font-display text-lg font-bold leading-7 sm:mt-4 sm:text-xl 2xl:text-[22px] ${accent ? 'text-cyan-200' : 'text-white'}`}>{value}</div>
     </div>
   );
 }
@@ -1057,7 +1059,7 @@ function Hint({ children }) {
 
 function CircuitBox({ lines }) {
   return (
-    <pre className="mb-4 overflow-x-auto rounded-xl border border-cyan-300/15 bg-slate-950/60 px-4 py-3 font-display text-sm leading-6 text-cyan-100">
+    <pre className="mb-4 overflow-x-auto rounded-xl border border-cyan-300/15 bg-slate-950/60 px-3 py-3 font-display text-xs leading-6 text-cyan-100 sm:px-4 sm:text-sm">
       {lines.join('\n')}
     </pre>
   );
@@ -1067,7 +1069,7 @@ function SafetyBox({ title, children }) {
   return (
     <div className="mt-5 rounded-[1.35rem] border border-amber-300/60 p-4">
       <div className="mb-3 flex items-center">
-        <span className="font-display text-xs font-bold uppercase tracking-[0.22em] text-amber-100">{title}</span>
+        <span className="font-display text-xs font-bold uppercase tracking-[0.16em] text-amber-100 sm:tracking-[0.22em]">{title}</span>
       </div>
       {children}
     </div>
