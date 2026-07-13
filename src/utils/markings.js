@@ -19,6 +19,12 @@ export function decodeColorBands(bands) {
 
 export function decodeSmdCode(rawCode) {
   const code = String(rawCode).trim().toUpperCase();
+  if (/^R\d+$/.test(code)) {
+    return { resistance: Number(`0.${code.slice(1)}`), system: 'R decimal' };
+  }
+  if (/^\d+R\d*$/.test(code)) {
+    return { resistance: Number(code.replace('R', '.')), system: 'R decimal' };
+  }
   if (/^\d{3}$/.test(code)) {
     return { resistance: Number(code.slice(0, 2)) * 10 ** Number(code[2]), system: '3 digit' };
   }

@@ -18,15 +18,15 @@ import { calculateTraceWidth } from './utils/pcbTrace';
 import { decodeColorBands, decodeSmdCode } from './utils/markings';
 import { currentDivider, lcCutoff, rcCutoff, voltageDivider } from './utils/filters';
 import { formatNumber, toNumber } from './utils/format';
-import { nextSeriesValue, recommendedResistorPower } from './utils/standards';
+import { recommendedResistorPower } from './utils/standards';
 import { calculateLedPotentiometer } from './utils/potentiometer';
 
 const tabs = [
   { id: 'ohm', label: 'Закон Ома', icon: Gauge },
-  { id: 'led', label: 'Резистор нагрузки', icon: Lightbulb },
-  { id: 'pot', label: 'Регулятор', icon: SlidersHorizontal },
+  { id: 'led', label: 'Ограничительный R', icon: Lightbulb },
+  { id: 'pot', label: 'Потенциометр', icon: SlidersHorizontal },
   { id: 'soldering', label: 'Пайка', icon: Thermometer },
-  { id: 'pcb', label: 'PCB Trace', icon: Layers3 },
+  { id: 'pcb', label: 'Ширина дорожки', icon: Layers3 },
   { id: 'markings', label: 'Маркировка', icon: Cpu },
   { id: 'resistors', label: 'Резисторы', icon: List },
   { id: 'dividers', label: 'Делители', icon: Split },
@@ -310,8 +310,6 @@ function OhmsLawPanel() {
   const scenario = ohmScenarios.find((item) => item.id === scenarioId) ?? ohmScenarios[0];
   const [values, setValues] = useState({ voltage: '5', current: '20', resistance: '', power: '' });
   const [currentUnit, setCurrentUnit] = useState('mA');
-  const [powerMarginPercent, setPowerMarginPercent] = useState('50');
-  const [resistanceMarginPercent, setResistanceMarginPercent] = useState('0');
   const current = toNumber(values.current);
   const result = calculateOhmsLaw({
     voltage: scenario.fields.includes('voltage') ? toNumber(values.voltage) : null,
@@ -319,11 +317,6 @@ function OhmsLawPanel() {
     resistance: scenario.fields.includes('resistance') ? toNumber(values.resistance) : null,
     power: null,
   });
-  const powerRecommendation = recommendedResistorPower(result?.power, (toNumber(powerMarginPercent) ?? 0) / 100);
-  const resistanceWithMargin = Number.isFinite(result?.resistance)
-    ? result.resistance * (1 + (toNumber(resistanceMarginPercent) ?? 0) / 100)
-    : null;
-  const recommendedResistance = nextSeriesValue(resistanceWithMargin, 'E24');
   const primary = ohmResultMeta[scenario.primaryResult];
 
   function selectScenario(nextScenario) {
@@ -387,10 +380,6 @@ function OhmsLawPanel() {
               </div>
             );
           })}
-          {scenario.primaryResult === 'resistance' && (
-            <Input label="Запас сопротивления" unit="%" value={resistanceMarginPercent} onChange={setResistanceMarginPercent} />
-          )}
-          <Input label="Запас мощности" unit="%" value={powerMarginPercent} onChange={setPowerMarginPercent} />
         </div>
       </Card>
       <Card title="Результат">
@@ -405,16 +394,6 @@ function OhmsLawPanel() {
         <Result label="Ток I" value={formatNumber(result?.current, 'A')} />
         <Result label="Сопротивление R" value={formatNumber(result?.resistance, 'Ω')} />
         <Result label="Мощность P" value={formatNumber(result?.power, 'W')} />
-        <SafetyBox title="Инженерный запас">
-          <Result label="Мощность с запасом" value={formatNumber(powerRecommendation?.requiredWithMargin, 'W')} />
-          <Result label="Резистор не менее" value={formatNumber(powerRecommendation?.recommended, 'W')} accent />
-          {scenario.primaryResult === 'resistance' && (
-            <>
-              <Result label="R с запасом" value={formatNumber(resistanceWithMargin, 'Ω')} />
-              <Result label="Номинал R не менее" value={formatNumber(recommendedResistance, 'Ω')} accent />
-            </>
-          )}
-        </SafetyBox>
       </Card>
     </Grid>
   );
@@ -427,8 +406,8 @@ function LedPanel() {
     forwardVoltage: '2.0',
     forwardCurrentMa: '20',
     selectedResistance: '470',
-    powerMarginPercent: '0',
-    resistanceMarginPercent: '0',
+    powerMarginPercent: '30',
+    resistanceMarginPercent: '30',
     series: 'E24',
   });
   const powerMarginPercent = toNumber(form.powerMarginPercent) ?? 0;
@@ -445,7 +424,6 @@ function LedPanel() {
   const checkResult = calculateLedWithSelectedResistor({
     supplyVoltage: toNumber(form.supplyVoltage),
     forwardVoltage: toNumber(form.forwardVoltage),
-    forwardCurrentMa: toNumber(form.forwardCurrentMa),
     resistance: toNumber(form.selectedResistance),
     powerMarginPercent,
   });
@@ -454,7 +432,7 @@ function LedPanel() {
     <Grid>
       <Card title="Последовательная цепь" wide>
         <CircuitBox lines={['+Vs ── R ── нагрузка ── GND']} />
-        <Hint>Подходит для LED и других последовательных нагрузок, если известно падение напряжения на нагрузке.</Hint>
+        <Hint>Подходит для LED и других последовательных нагрузок, если известно падение напряжения на нагрузке. Проверка резистора считает нагрузку как фиксированное падение напряжения.</Hint>
         <div className="mb-5 grid grid-cols-1 gap-2 rounded-2xl border border-white/10 bg-white/[0.025] p-2 sm:grid-cols-2 sm:gap-3">
           <button
             className={`rounded-xl px-4 py-3 text-left font-display text-sm font-semibold uppercase tracking-[0.12em] transition ${
@@ -495,7 +473,7 @@ function LedPanel() {
       {mode === 'check' ? (
         <div className="rounded-[1.5rem] border border-amber-300/60 bg-slate-950/55 p-5 sm:p-6">
           <h3 className="mb-5 font-display text-sm font-bold uppercase tracking-[0.16em] text-amber-100 sm:tracking-[0.2em]">Итог</h3>
-          <Result label="На нагрузке будет примерно" value={formatNumber(checkResult?.ledVoltage, 'V')} />
+          <Result label="Принятое напряжение нагрузки" value={formatNumber(checkResult?.ledVoltage, 'V')} />
           <Result label="На резисторе останется" value={formatNumber(checkResult?.voltageOnResistor, 'V')} />
           <Result label="Мощность резистора" value={formatNumber(checkResult?.powerRecommendation?.recommended, 'W')} accent />
           <Result label="Ток нагрузки" value={formatNumber(checkResult?.current * 1_000, 'mA', 1)} />
@@ -504,7 +482,8 @@ function LedPanel() {
       ) : (
         <div className="rounded-[1.5rem] border border-amber-300/60 bg-slate-950/55 p-5 sm:p-6">
           <h3 className="mb-5 font-display text-sm font-bold uppercase tracking-[0.16em] text-amber-100 sm:tracking-[0.2em]">Итог</h3>
-          <Result label="На нагрузке принято" value={formatNumber(ledVoltage, 'V')} />
+          <Result label="Падение на нагрузке" value={formatNumber(ledVoltage, 'V')} />
+          <Result label="Точное расчетное R" value={formatNumber(pickResult?.exactResistance, 'Ω')} />
           <Result label="На резисторе останется" value={formatNumber(pickResult?.voltageOnResistor, 'V')} />
           <Result label="Ставить резистор" value={formatNumber(pickResult?.standardResistance, 'Ω')} accent />
           <Result label="Мощность резистора" value={formatNumber(pickResult?.powerRecommendation?.recommended, 'W')} accent />
@@ -529,13 +508,13 @@ function PotentiometerPanel() {
     fixedResistance: toNumber(form.fixedResistance),
     minCurrentMa: toNumber(form.minCurrentMa),
   });
-  const fixedPowerRecommendation = recommendedResistorPower(result?.fixedResistorMaxPower, 0);
+  const fixedPowerRecommendation = recommendedResistorPower(result?.fixedResistorMaxPower, 0.5);
 
   return (
     <Grid>
       <Card title="Нагрузка + потенциометр" wide>
         <CircuitBox lines={['+Vs ── R защитный ── POT ── нагрузка ── GND']} />
-        <Hint>0% ручки = большое сопротивление и малый ток. 100% ручки = потенциометр почти 0 Ω, ток максимальный через защитный резистор.</Hint>
+        <Hint>При максимальном сопротивлении потенциометра ток минимален. При минимальном сопротивлении ток ограничивает защитный резистор.</Hint>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:gap-5">
           <Input label="Vs питание" unit="V" value={form.supplyVoltage} onChange={(value) => setForm({ ...form, supplyVoltage: value })} />
           <Input label="U нагрузки" unit="V" value={form.forwardVoltage} onChange={(value) => setForm({ ...form, forwardVoltage: value })} />
@@ -550,6 +529,12 @@ function PotentiometerPanel() {
         <Result label="Ток нагрузки на максимуме" value={formatNumber(result?.maxCurrent * 1_000, 'mA', 1)} />
         <Result label="Мощность защитного R" value={formatNumber(fixedPowerRecommendation?.recommended, 'W')} accent />
         <Result label="Потенциометр рассеивает до" value={formatNumber(result?.potMaxPower, 'W', 3)} />
+        <Result label="Максимум при Rpot" value={formatNumber(result?.potMaxPowerResistance, 'Ω')} />
+        {result?.exceedsCatalog && (
+          <p className="mt-5 rounded-xl border border-amber-300/20 bg-amber-300/[0.06] p-4 text-sm leading-6 text-amber-50">
+            Для заданного минимального тока нужен потенциометр больше доступного ряда. Показан максимальный номинал из списка.
+          </p>
+        )}
       </div>
     </Grid>
   );
@@ -560,7 +545,7 @@ function SolderingPanel() {
     {
       id: 'leadFreeBoard',
       title: 'PbF / Pb-Free / LF / RoHS',
-      label: 'Скорее бессвинец',
+      label: 'Скорее бессвинцовый',
       alloyId: 'leadFree',
       text: 'Современная плата. Обычно нужна температура выше, чистое залуженное жало и хорошая передача тепла.',
     },
@@ -573,7 +558,7 @@ function SolderingPanel() {
     },
     {
       id: 'unknownBoard',
-      title: 'Не знаю / ничего нет',
+      title: 'Не знаю / нет маркировки',
       label: 'Безопасный старт',
       alloyId: 'unknown',
       text: 'Начните умеренно. Если припой не течет, сначала проверьте жало и теплопередачу, потом поднимайте температуру.',
@@ -756,7 +741,7 @@ function PcbPanel() {
   return (
     <Grid>
       <Card title="Параметры дорожки" wide>
-        <Hint>Для платы берите округленную ширину вверх.</Hint>
+        <Hint>Это оценка по IPC-2221. Для платы берите округленную ширину вверх и учитывайте охлаждение, полигоны и реальные условия трассировки.</Hint>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:gap-5">
           <Input label="Ток" unit="A" value={form.current} onChange={(value) => setForm({ ...form, current: value })} />
           <Select label="Медь" value={form.copperMicrons} onChange={(value) => setForm({ ...form, copperMicrons: value })} options={['18', '35', '70']} suffix="мкм" />
@@ -764,13 +749,13 @@ function PcbPanel() {
           <Select label="Слой" value={form.layer} onChange={(value) => setForm({ ...form, layer: value })} options={[['external', 'Внешний'], ['internal', 'Внутренний']]} />
         </div>
       </Card>
-      <Card title="Безопасная ширина">
-        <Result label="Расчетная ширина" value={formatNumber(result?.widthMm, 'mm')} />
-        <Result label="Округлить вверх до" value={formatNumber(result?.roundedSafeMm, 'mm')} accent />
-        <Result label="Площадь сечения" value={formatNumber(result?.areaMils, 'mil²')} />
+      <Card title="Оценочная ширина">
+        <Result label="Расчетная ширина" value={formatNumber(result?.widthMm, 'мм')} />
+        <Result label="Округлить вверх до" value={formatNumber(result?.roundedSafeMm, 'мм')} accent />
+        <Result label="Площадь сечения, кв. mil" value={formatNumber(result?.areaMils, 'mil²')} />
         <Result label="Модель" value={result?.model ?? '—'} />
         <p className="mt-5 rounded-xl border border-cyan-300/20 bg-cyan-300/10 p-4 text-sm leading-6 text-cyan-100">
-          Используется IPC-2221: I = k * ΔT^0.44 * A^0.725. Для внутренних слоев коэффициент ниже, поэтому ширина получается больше.
+          Используется IPC-2221: I = k × ΔT^0.44 × A^0.725. Для внутренних слоев коэффициент ниже, поэтому ширина получается больше.
         </p>
       </Card>
     </Grid>
@@ -810,11 +795,11 @@ function MarkingsPanel() {
         </div>
       </Card>
       <Card title="Декодер SMD">
-        <Hint>Пример: 103 = 10 kΩ.</Hint>
+        <Hint>Пример: 103 = 10 kΩ, 4R7 = 4.7 Ω.</Hint>
         <div className="mb-4">
           <Input label="SMD код" value={smd} onChange={setSmd} />
         </div>
-        <Result label="Цветовая маркировка" value={formatNumber(colorResult?.resistance, 'Ω')} accent />
+        <Result label="Номинал по кольцам" value={formatNumber(colorResult?.resistance, 'Ω')} accent />
         <Result label="Допуск" value={colorResult?.tolerance ? `±${colorResult.tolerance}%` : '—'} />
         <Result label="SMD номинал" value={formatNumber(smdResult?.resistance, 'Ω')} accent />
         <Result label="Система" value={smdResult?.system ?? '—'} />
@@ -847,10 +832,10 @@ function ResistorsPanel() {
         </div>
       </Card>
       <Card title="Мощность резисторов">
-        <Hint>Это не номинал в омах, а допустимый нагрев резистора. Если расчет дал 0.136 W, резистор на 0.125 W уже маловат, поэтому берут 0.25 W.</Hint>
+        <Hint>Это не номинал в омах, а допустимая рассеиваемая мощность резистора. Если расчет дал 0.136 W, резистор на 0.125 W уже маловат, поэтому берут 0.25 W.</Hint>
         <PowerGuide power="0.125 W" title="Минимальный" text="Для очень малых токов и компактных схем, когда расчетная мощность заметно ниже 0.125 W." />
-        <PowerGuide power="0.25 W" title="Обычный для макетки" text="Самый частый выводной резистор. Хороший вариант для индикаторов, подтяжек и простых схем." accent />
-        <PowerGuide power="0.5 W" title="Если греется" text="Бери, когда расчет близок к 0.25 W или резистор будет работать долго." />
+        <PowerGuide power="0.25 W" title="Обычный для макетирования" text="Самый частый выводной резистор. Хороший вариант для индикаторов, подтяжек и простых схем." accent />
+        <PowerGuide power="0.5 W" title="Если греется" text="Берите, когда расчет близок к 0.25 W или резистор будет работать долго." />
         <PowerGuide power="1 W" title="Повышенная мощность" text="Для заметного нагрева, нагрузок и схем с большим падением напряжения." />
         <PowerGuide power="2 W / 5 W" title="Силовые цепи" text="Для нагрузочных, гасящих и силовых резисторов. Обычно крупные корпуса." />
       </Card>
@@ -871,7 +856,7 @@ function PowerGuide({ power, title, text, accent = false }) {
 }
 
 function DividersPanel() {
-  const [voltageForm, setVoltageForm] = useState({ vin: '12', r1: '10000', r2: '3300' });
+  const [voltageForm, setVoltageForm] = useState({ vin: '12', r1: '10000', r2: '3300', rLoad: '' });
   const [currentForm, setCurrentForm] = useState({ totalCurrent: '100', currentUnit: 'mA', r1: '1000', r2: '2200' });
   const totalCurrent = toNumber(currentForm.totalCurrent);
   const currentDividerResult = currentDivider({
@@ -883,6 +868,7 @@ function DividersPanel() {
     vin: toNumber(voltageForm.vin),
     r1: toNumber(voltageForm.r1),
     r2: toNumber(voltageForm.r2),
+    rLoad: toNumber(voltageForm.rLoad),
   });
   const voltageRatio = voltageDividerResult ? voltageDividerResult.vout / toNumber(voltageForm.vin) : null;
 
@@ -890,19 +876,23 @@ function DividersPanel() {
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-2 2xl:gap-6">
       <Card title="Делитель напряжения: R1 + R2">
         <CircuitBox lines={['Вход ── R1 ──●── R2 ── GND', '             │', '           Выход']} />
-        <Hint>Последовательные резисторы делят напряжение.</Hint>
+        <Hint>Последовательные резисторы делят напряжение. Если выход нагружен, укажите сопротивление нагрузки: оно считается параллельно R2.</Hint>
         <div className="grid grid-cols-1 gap-4">
           <Input label="Входное напряжение" unit="V" value={voltageForm.vin} onChange={(value) => setVoltageForm({ ...voltageForm, vin: value })} />
           <Input label="R1 верхний" unit="Ω" value={voltageForm.r1} onChange={(value) => setVoltageForm({ ...voltageForm, r1: value })} />
           <Input label="R2 нижний" unit="Ω" value={voltageForm.r2} onChange={(value) => setVoltageForm({ ...voltageForm, r2: value })} />
+          <Input label="R нагрузки" unit="Ω" value={voltageForm.rLoad} onChange={(value) => setVoltageForm({ ...voltageForm, rLoad: value })} />
         </div>
         <div className="mt-5 grid grid-cols-1 gap-3 2xl:grid-cols-2">
           <Result label="Выходное напряжение" value={formatNumber(voltageDividerResult?.vout, 'V')} accent />
           <Result label="Коэффициент" value={Number.isFinite(voltageRatio) ? `${formatNumber(voltageRatio * 100, '%')}` : '—'} />
-          <Result label="Ток цепи" value={formatNumber(voltageDividerResult?.current, 'A')} />
-          <Result label="Ток цепи" value={formatNumber((voltageDividerResult?.current ?? NaN) * 1_000, 'mA')} />
+          <Result label="Ток цепи, A" value={formatNumber(voltageDividerResult?.current, 'A')} />
+          <Result label="Ток цепи, mA" value={formatNumber((voltageDividerResult?.current ?? NaN) * 1_000, 'mA')} />
+          <Result label="Нижнее плечо с нагрузкой" value={formatNumber(voltageDividerResult?.lowerResistance, 'Ω')} />
+          <Result label="Ток нагрузки" value={formatNumber(voltageDividerResult?.loadCurrent, 'A')} />
           <Result label="Мощность R1" value={formatNumber(voltageDividerResult?.r1Power, 'W', 4)} />
           <Result label="Мощность R2" value={formatNumber(voltageDividerResult?.r2Power, 'W', 4)} />
+          <Result label="Мощность нагрузки" value={formatNumber(voltageDividerResult?.loadPower, 'W', 4)} />
         </div>
       </Card>
 
@@ -924,7 +914,7 @@ function DividersPanel() {
         <div className="mt-5 grid grid-cols-1 gap-3 2xl:grid-cols-2">
           <Result label="Ток через R1" value={formatNumber(currentDividerResult?.i1, 'A')} accent />
           <Result label="Ток через R2" value={formatNumber(currentDividerResult?.i2, 'A')} accent />
-          <Result label="R эквивалент" value={formatNumber(currentDividerResult?.equivalentResistance, 'Ω')} />
+          <Result label="Эквивалентное R" value={formatNumber(currentDividerResult?.equivalentResistance, 'Ω')} />
           <Result label="Напряжение ветвей" value={formatNumber(currentDividerResult?.branchVoltage, 'V')} />
           <Result label="Мощность R1" value={formatNumber(currentDividerResult?.r1Power, 'W', 4)} />
           <Result label="Мощность R2" value={formatNumber(currentDividerResult?.r2Power, 'W', 4)} />
@@ -935,15 +925,15 @@ function DividersPanel() {
 }
 
 function FiltersPanel() {
-  const [form, setForm] = useState({ r: '10000', c: '10', l: '100', cnf: '100', vin: '12', r1: '10000', r2: '3300' });
+  const [form, setForm] = useState({ r: '10000', c: '10', l: '100', cnf: '100', vin: '12', r1: '10000', r2: '3300', rLoad: '' });
   const rc = rcCutoff(toNumber(form.r), toNumber(form.c));
   const lc = lcCutoff(toNumber(form.l), toNumber(form.cnf));
-  const divider = voltageDivider({ vin: toNumber(form.vin), r1: toNumber(form.r1), r2: toNumber(form.r2) });
+  const divider = voltageDivider({ vin: toNumber(form.vin), r1: toNumber(form.r1), r2: toNumber(form.r2), rLoad: toNumber(form.rLoad) });
 
   return (
     <Grid>
       <Card title="RC / LC фильтры" wide>
-        <Hint>RC и LC считают частоту среза / резонанса.</Hint>
+        <Hint>RC считает частоту среза. LC считает резонансную частоту контура.</Hint>
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:gap-5">
           <Input label="R" unit="Ω" value={form.r} onChange={(value) => setForm({ ...form, r: value })} />
           <Input label="C" unit="µF" value={form.c} onChange={(value) => setForm({ ...form, c: value })} />
@@ -952,19 +942,22 @@ function FiltersPanel() {
         </div>
         <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:gap-5">
           <Result label="RC частота среза" value={formatNumber(rc, 'Hz')} accent />
-          <Result label="LC резонанс / срез" value={formatNumber(lc, 'Hz')} accent />
+          <Result label="LC резонансная частота" value={formatNumber(lc, 'Hz')} accent />
         </div>
       </Card>
       <Card title="Делитель напряжения">
         <CircuitBox lines={['Вход ── R1 ──●── R2 ── GND', '             │', '           Выход']} />
+        <Hint>Оставьте R нагрузки пустым для расчета без нагрузки. Если указать номинал, он считается параллельно R2.</Hint>
         <div className="space-y-4">
           <Input label="Входное напряжение" unit="V" value={form.vin} onChange={(value) => setForm({ ...form, vin: value })} />
           <Input label="R1 верхнее плечо" unit="Ω" value={form.r1} onChange={(value) => setForm({ ...form, r1: value })} />
           <Input label="R2 нижнее плечо" unit="Ω" value={form.r2} onChange={(value) => setForm({ ...form, r2: value })} />
+          <Input label="R нагрузки" unit="Ω" value={form.rLoad} onChange={(value) => setForm({ ...form, rLoad: value })} />
         </div>
         <div className="mt-5">
           <Result label="Выходное напряжение" value={formatNumber(divider?.vout, 'V')} accent />
           <Result label="Ток делителя" value={formatNumber(divider?.current, 'A')} />
+          <Result label="Ток нагрузки" value={formatNumber(divider?.loadCurrent, 'A')} />
         </div>
       </Card>
     </Grid>

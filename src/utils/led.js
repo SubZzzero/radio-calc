@@ -5,7 +5,7 @@ export function calculateLedResistor({
   forwardVoltage,
   forwardCurrentMa,
   series,
-  powerMarginPercent = 0,
+  powerMarginPercent = 30,
   resistanceMarginPercent = 0,
 }) {
   if (
@@ -53,18 +53,15 @@ export function calculateLedResistor({
 export function calculateLedWithSelectedResistor({
   supplyVoltage,
   forwardVoltage,
-  forwardCurrentMa,
   resistance,
-  powerMarginPercent = 0,
+  powerMarginPercent = 30,
 }) {
   if (
     !Number.isFinite(supplyVoltage) ||
     !Number.isFinite(forwardVoltage) ||
-    !Number.isFinite(forwardCurrentMa) ||
     !Number.isFinite(resistance) ||
-    supplyVoltage <= 0 ||
-    forwardVoltage <= 0 ||
-    forwardCurrentMa <= 0 ||
+    supplyVoltage <= forwardVoltage ||
+    forwardVoltage < 0 ||
     resistance <= 0 ||
     !Number.isFinite(powerMarginPercent) ||
     powerMarginPercent < 0
@@ -72,23 +69,9 @@ export function calculateLedWithSelectedResistor({
     return null;
   }
 
-  const referenceCurrent = forwardCurrentMa / 1_000;
-  const diodeSlope = 0.052;
-  const maxCurrent = supplyVoltage / resistance;
-  let low = Math.max(referenceCurrent * 1e-9, Number.EPSILON);
-  let high = maxCurrent;
-
-  for (let index = 0; index < 80; index += 1) {
-    const current = (low + high) / 2;
-    const ledVoltage = forwardVoltage + diodeSlope * Math.log(current / referenceCurrent);
-    const totalVoltage = current * resistance + ledVoltage;
-    if (totalVoltage > supplyVoltage) high = current;
-    else low = current;
-  }
-
-  const current = (low + high) / 2;
-  const ledVoltage = forwardVoltage + diodeSlope * Math.log(current / referenceCurrent);
+  const ledVoltage = forwardVoltage;
   const voltageOnResistor = supplyVoltage - ledVoltage;
+  const current = voltageOnResistor / resistance;
   const power = current * current * resistance;
 
   return {

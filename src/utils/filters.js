@@ -8,14 +8,23 @@ export function lcCutoff(inductanceUh, capacitanceNf) {
   return 1 / (2 * Math.PI * Math.sqrt(inductanceUh * 1e-6 * capacitanceNf * 1e-9));
 }
 
-export function voltageDivider({ vin, r1, r2 }) {
+export function voltageDivider({ vin, r1, r2, rLoad = null }) {
   if (!Number.isFinite(vin) || !Number.isFinite(r1) || !Number.isFinite(r2) || r1 <= 0 || r2 <= 0) return null;
-  const current = vin / (r1 + r2);
+  if (rLoad !== null && rLoad !== undefined && (!Number.isFinite(rLoad) || rLoad <= 0)) return null;
+
+  const hasLoad = Number.isFinite(rLoad);
+  const lowerResistance = hasLoad ? 1 / (1 / r2 + 1 / rLoad) : r2;
+  const current = vin / (r1 + lowerResistance);
+  const vout = current * lowerResistance;
+
   return {
-    vout: vin * (r2 / (r1 + r2)),
+    vout,
     current,
+    lowerResistance,
     r1Power: current * current * r1,
-    r2Power: current * current * r2,
+    r2Power: (vout * vout) / r2,
+    loadCurrent: hasLoad ? vout / rLoad : null,
+    loadPower: hasLoad ? (vout * vout) / rLoad : null,
   };
 }
 
