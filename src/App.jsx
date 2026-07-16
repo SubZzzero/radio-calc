@@ -173,53 +173,13 @@ const desolderingTips = [
   },
 ];
 
-const ohmScenarios = [
-  {
-    id: 'resistance',
-    title: 'Найти сопротивление',
-    badge: 'Самый частый',
-    description: 'Знаю напряжение на резисторе и нужный ток.',
-    formula: 'R = U / I',
-    fields: ['voltage', 'current'],
-    primaryResult: 'resistance',
-    defaults: { voltage: '5', current: '20', currentUnit: 'mA', resistance: '', power: '' },
-  },
-  {
-    id: 'current',
-    title: 'Найти ток',
-    badge: 'Проверка цепи',
-    description: 'Знаю напряжение и уже выбранный резистор.',
-    formula: 'I = U / R',
-    fields: ['voltage', 'resistance'],
-    primaryResult: 'current',
-    defaults: { voltage: '12', current: '', currentUnit: 'A', resistance: '1000', power: '' },
-  },
-  {
-    id: 'voltage',
-    title: 'Найти напряжение',
-    badge: 'Падение на R',
-    description: 'Знаю ток через цепь и сопротивление.',
-    formula: 'U = I × R',
-    fields: ['current', 'resistance'],
-    primaryResult: 'voltage',
-    defaults: { voltage: '', current: '20', currentUnit: 'mA', resistance: '330', power: '' },
-  },
-  {
-    id: 'power',
-    title: 'Найти мощность',
-    badge: 'Выбор ваттности',
-    description: 'Знаю напряжение на резисторе и ток через него.',
-    formula: 'P = U × I',
-    fields: ['voltage', 'current'],
-    primaryResult: 'power',
-    defaults: { voltage: '12', current: '0.5', currentUnit: 'A', resistance: '', power: '' },
-  },
-];
+const ohmFields = ['voltage', 'current', 'resistance', 'power'];
 
 const ohmFieldMeta = {
-  voltage: { label: 'Напряжение U', unit: 'V', hint: 'Сколько вольт падает именно на этом участке цепи.' },
-  current: { label: 'Ток I', hint: 'Желаемый или измеренный ток через этот участок.' },
-  resistance: { label: 'Сопротивление R', unit: 'Ω', hint: 'Номинал резистора или сопротивление нагрузки.' },
+  voltage: { label: 'Напряжение', symbol: 'U', unit: 'V', hint: 'Падение напряжения на участке цепи.' },
+  current: { label: 'Ток', symbol: 'I', hint: 'Ток через этот же участок цепи.' },
+  resistance: { label: 'Сопротивление', symbol: 'R', unit: 'Ω', hint: 'Номинал резистора или сопротивление нагрузки.' },
+  power: { label: 'Мощность', symbol: 'P', hint: 'Тепловая мощность, которую рассеивает нагрузка.' },
 };
 
 const ohmResultMeta = {
@@ -306,97 +266,196 @@ function App() {
 }
 
 function OhmsLawPanel() {
-  const [scenarioId, setScenarioId] = useState('resistance');
-  const scenario = ohmScenarios.find((item) => item.id === scenarioId) ?? ohmScenarios[0];
   const [values, setValues] = useState({ voltage: '5', current: '20', resistance: '', power: '' });
   const [currentUnit, setCurrentUnit] = useState('mA');
-  const current = toNumber(values.current);
-  const result = calculateOhmsLaw({
-    voltage: scenario.fields.includes('voltage') ? toNumber(values.voltage) : null,
-    current: scenario.fields.includes('current') && Number.isFinite(current) ? (currentUnit === 'mA' ? current / 1_000 : current) : null,
-    resistance: scenario.fields.includes('resistance') ? toNumber(values.resistance) : null,
-    power: null,
-  });
-  const primary = ohmResultMeta[scenario.primaryResult];
+  const [powerUnit, setPowerUnit] = useState('W');
+  const current = parsePositive(values.current);
+  const power = parsePositive(values.power);
+  const inputs = {
+    voltage: parsePositive(values.voltage),
+    current: Number.isFinite(current) ? (currentUnit === 'mA' ? current / 1_000 : current) : null,
+    resistance: parsePositive(values.resistance),
+    power: Number.isFinite(power) ? (powerUnit === 'mW' ? power / 1_000 : power) : null,
+  };
+  const knownFields = ohmFields.filter((field) => Number.isFinite(inputs[field]));
+  const result = knownFields.length === 2 ? calculateOhmsLaw(inputs) : null;
+  const status = getOhmStatus(knownFields.length);
 
-  function selectScenario(nextScenario) {
-    setScenarioId(nextScenario.id);
-    const { currentUnit: nextCurrentUnit, ...nextValues } = nextScenario.defaults;
-    setValues(nextValues);
-    setCurrentUnit(nextCurrentUnit);
+  function clearValues() {
+    setValues({ voltage: '', current: '', resistance: '', power: '' });
   }
 
   return (
     <Grid>
       <Card title="Входные параметры" wide>
-        <Hint>Сначала выберите, что нужно получить. После этого вводите только подсвеченные исходные данные.</Hint>
-        <div className="mb-6 grid grid-cols-1 gap-3 xl:grid-cols-2">
-          {ohmScenarios.map((item) => {
-            const active = item.id === scenario.id;
-            return (
-              <button
-                key={item.id}
-                className={`rounded-2xl border p-4 text-left transition ${
-                  active
-                    ? 'border-cyan-300/50 bg-cyan-300/15 shadow-glow'
-                    : 'border-white/10 bg-white/[0.025] hover:border-cyan-300/25 hover:bg-white/[0.045]'
-                }`}
-                type="button"
-                onClick={() => selectScenario(item)}
-              >
-                <span className="mb-3 inline-flex rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-amber-100">
-                  {item.badge}
-                </span>
-                <span className="block font-display text-lg font-bold tracking-[-0.04em] text-white">{item.title}</span>
-                <span className="mt-2 block text-sm leading-5 text-slate-400">{item.description}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="mb-6 rounded-[1.35rem] border border-cyan-300/20 bg-cyan-300/[0.07] p-4 sm:p-5">
-          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-200 sm:tracking-[0.24em]">Формула для этого режима</div>
-          <div className="mt-3 break-words font-display text-2xl font-bold tracking-[-0.08em] text-white sm:text-3xl 2xl:text-4xl">{scenario.formula}</div>
-        </div>
-
+        <Hint>Заполните ровно любые две положительные величины. Остальные значения будут рассчитаны автоматически по закону Ома и формулам мощности.</Hint>
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 2xl:gap-5">
-          {scenario.fields.map((field) => {
+          {ohmFields.map((field) => {
             const meta = ohmFieldMeta[field];
+            const active = knownFields.includes(field);
             return (
-              <div key={field}>
+              <div
+                key={field}
+                className={`rounded-[1.35rem] border p-4 transition ${
+                  active ? 'border-cyan-300/45 bg-cyan-300/[0.08]' : 'border-white/10 bg-white/[0.025]'
+                }`}
+              >
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <div>
+                    <div className="font-display text-xl font-bold tracking-[-0.06em] text-white">{meta.symbol}</div>
+                    <div className="mt-1 text-sm text-slate-400">{meta.label}</div>
+                  </div>
+                  <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${
+                    active ? 'border-cyan-300/30 bg-cyan-300/10 text-cyan-100' : 'border-white/10 bg-white/[0.035] text-slate-500'
+                  }`}>
+                    {active ? 'исходное' : 'пусто'}
+                  </span>
+                </div>
                 {field === 'current' ? (
                   <InputWithUnitSelect
-                    label={meta.label}
+                    label={`${meta.label} ${meta.symbol}`}
                     value={values.current}
                     unit={currentUnit}
                     units={['A', 'mA']}
                     onUnitChange={setCurrentUnit}
                     onChange={(value) => setValues({ ...values, current: value })}
                   />
+                ) : field === 'power' ? (
+                  <InputWithUnitSelect
+                    label={`${meta.label} ${meta.symbol}`}
+                    value={values.power}
+                    unit={powerUnit}
+                    units={['W', 'mW']}
+                    onUnitChange={setPowerUnit}
+                    onChange={(value) => setValues({ ...values, power: value })}
+                  />
                 ) : (
-                  <Input label={meta.label} unit={meta.unit} value={values[field]} onChange={(value) => setValues({ ...values, [field]: value })} />
+                  <Input label={`${meta.label} ${meta.symbol}`} unit={meta.unit} value={values[field]} onChange={(value) => setValues({ ...values, [field]: value })} />
                 )}
                 <p className="mt-2 text-xs leading-5 text-slate-500">{meta.hint}</p>
               </div>
             );
           })}
         </div>
+
+        <div className={`mt-5 rounded-[1.35rem] border px-4 py-4 sm:flex sm:items-center sm:justify-between sm:gap-4 ${status.tone}`}>
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.18em]">{status.title}</div>
+            <div className="mt-2 text-sm leading-5 text-slate-300">{status.text}</div>
+          </div>
+          <button
+            className="mt-4 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-cyan-300/30 hover:text-white sm:mt-0"
+            type="button"
+            onClick={clearValues}
+          >
+            Очистить
+          </button>
+        </div>
       </Card>
       <Card title="Результат">
         <div className="mb-5 rounded-[1.5rem] border border-cyan-300/25 bg-cyan-300/[0.08] px-4 py-5 sm:px-5 sm:py-6">
-          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-200 sm:tracking-[0.24em]">Главный ответ</div>
-          <div className="mt-3 text-sm text-slate-400">{primary.label}</div>
-          <div className="mt-3 break-words font-display text-2xl font-bold tracking-[-0.08em] text-white sm:text-3xl 2xl:text-4xl">
-            {formatNumber(result?.[scenario.primaryResult], primary.unit)}
+          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-200 sm:tracking-[0.24em]">{result ? 'Расчет готов' : 'Ожидаю данные'}</div>
+          <div className="mt-3 text-sm leading-6 text-slate-300">
+            {result ? `Используются: ${knownFields.map((field) => `${ohmFieldMeta[field].label} ${ohmFieldMeta[field].symbol}`).join(' + ')}.` : status.text}
           </div>
         </div>
-        <Result label="Напряжение U" value={formatNumber(result?.voltage, 'V')} />
-        <Result label="Ток I" value={formatNumber(result?.current, 'A')} />
-        <Result label="Сопротивление R" value={formatNumber(result?.resistance, 'Ω')} />
-        <Result label="Мощность P" value={formatNumber(result?.power, 'W')} />
+        {ohmFields.map((field) => (
+          <OhmResult
+            key={field}
+            field={field}
+            inputs={inputs}
+            result={result}
+            knownFields={knownFields}
+            currentUnit={currentUnit}
+            powerUnit={powerUnit}
+          />
+        ))}
       </Card>
     </Grid>
   );
+}
+
+function OhmResult({ field, inputs, result, knownFields, currentUnit, powerUnit }) {
+  const meta = ohmFieldMeta[field];
+  const known = knownFields.includes(field);
+  const value = result?.[field] ?? (known ? inputs[field] : null);
+  return (
+    <div className={`mb-3 min-w-0 rounded-2xl border px-4 py-4 sm:px-5 sm:py-5 ${known ? 'border-white/10 bg-white/[0.025]' : 'border-cyan-300/15 bg-white/[0.04]'}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="break-words text-[11px] font-semibold uppercase leading-4 tracking-normal text-slate-500">{meta.label} {meta.symbol}</div>
+        <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.12em] ${known ? 'border-white/10 text-slate-500' : 'border-cyan-300/25 text-cyan-100'}`}>
+          {known ? 'задано' : 'расчет'}
+        </span>
+      </div>
+      <div className={`mt-3 break-words font-display text-lg font-bold leading-7 sm:mt-4 sm:text-xl 2xl:text-[22px] ${known ? 'text-slate-300' : 'text-white'}`}>
+        {formatOhmValue(field, value, currentUnit, powerUnit)}
+      </div>
+      <div className="mt-2 text-xs leading-5 text-slate-500">{known ? 'Исходное значение пользователя' : getOhmFormula(field, knownFields)}</div>
+    </div>
+  );
+}
+
+function parsePositive(value) {
+  const number = toNumber(value);
+  return Number.isFinite(number) && number > 0 ? number : null;
+}
+
+function getOhmStatus(knownCount) {
+  if (knownCount === 2) {
+    return {
+      title: 'Данных достаточно',
+      text: 'Расчет выполнен по двум исходным величинам.',
+      tone: 'border-cyan-300/25 bg-cyan-300/[0.07] text-cyan-100',
+    };
+  }
+
+  if (knownCount < 2) {
+    return {
+      title: 'Нужно больше данных',
+      text: `Заполните еще ${2 - knownCount} ${knownCount === 1 ? 'величину' : 'величины'}.`,
+      tone: 'border-amber-300/25 bg-amber-300/[0.07] text-amber-100',
+    };
+  }
+
+  return {
+    title: 'Слишком много исходных',
+    text: 'Оставьте ровно две величины, чтобы расчет был однозначным.',
+    tone: 'border-amber-300/25 bg-amber-300/[0.07] text-amber-100',
+  };
+}
+
+function formatOhmValue(field, value, currentUnit, powerUnit) {
+  if (field === 'current') return formatNumber(currentUnit === 'mA' ? value * 1_000 : value, currentUnit);
+  if (field === 'power') return formatNumber(powerUnit === 'mW' ? value * 1_000 : value, powerUnit);
+  return formatNumber(value, ohmResultMeta[field].unit);
+}
+
+function getOhmFormula(field, knownFields) {
+  if (knownFields.length !== 2) return 'Заполните две исходные величины';
+  const has = (name) => knownFields.includes(name);
+
+  if (field === 'voltage') {
+    if (has('current') && has('resistance')) return 'U = I × R';
+    if (has('power') && has('current')) return 'U = P / I';
+    if (has('power') && has('resistance')) return 'U = √(P × R)';
+  }
+  if (field === 'current') {
+    if (has('voltage') && has('resistance')) return 'I = U / R';
+    if (has('power') && has('voltage')) return 'I = P / U';
+    if (has('power') && has('resistance')) return 'I = √(P / R)';
+  }
+  if (field === 'resistance') {
+    if (has('voltage') && has('current')) return 'R = U / I';
+    if (has('voltage') && has('power')) return 'R = U² / P';
+    if (has('power') && has('current')) return 'R = P / I²';
+  }
+  if (field === 'power') {
+    if (has('voltage') && has('current')) return 'P = U × I';
+    if (has('voltage') && has('resistance')) return 'P = U² / R';
+    if (has('current') && has('resistance')) return 'P = I² × R';
+  }
+
+  return 'Расчетная величина';
 }
 
 function LedPanel() {
