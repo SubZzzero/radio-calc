@@ -589,6 +589,11 @@ function PotentiometerPanel() {
         <Result label="Мощность защитного R" value={formatNumber(fixedPowerRecommendation?.recommended, 'W')} accent />
         <Result label="Потенциометр рассеивает до" value={formatNumber(result?.potMaxPower, 'W', 3)} />
         <Result label="Максимум при Rpot" value={formatNumber(result?.potMaxPowerResistance, 'Ω')} />
+        {result?.minCurrentExceedsMax && (
+          <p className="mt-5 rounded-xl border border-red-300/25 bg-red-300/[0.06] p-4 text-sm leading-6 text-red-50">
+            Заданный минимальный ток выше максимального тока с этим защитным резистором. Даже при минимальном сопротивлении потенциометра ток будет меньше заданного.
+          </p>
+        )}
         {result?.exceedsCatalog && (
           <p className="mt-5 rounded-xl border border-amber-300/20 bg-amber-300/[0.06] p-4 text-sm leading-6 text-amber-50">
             Для заданного минимального тока нужен потенциометр больше доступного ряда. Показан максимальный номинал из списка.

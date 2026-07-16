@@ -21,11 +21,12 @@ export function calculateLedPotentiometer({
 
   const voltageOnResistors = supplyVoltage - forwardVoltage;
   const minCurrent = minCurrentMa / 1_000;
+  const maxCurrent = voltageOnResistors / fixedResistance;
+  const minCurrentExceedsMax = minCurrent > maxCurrent;
   const exactPotentiometer = Math.max(voltageOnResistors / minCurrent - fixedResistance, 0);
   const maxCatalogPotentiometer = potentiometerValues.at(-1);
   const recommendedPotentiometer = potentiometerValues.find((value) => value >= exactPotentiometer) ?? maxCatalogPotentiometer;
   const exceedsCatalog = exactPotentiometer > maxCatalogPotentiometer;
-  const maxCurrent = voltageOnResistors / fixedResistance;
   const minCurrentWithSelectedPot = voltageOnResistors / (fixedResistance + recommendedPotentiometer);
   const fixedResistorMaxPower = maxCurrent * maxCurrent * fixedResistance;
   const potPowerAt = (potResistance) => (voltageOnResistors * voltageOnResistors * potResistance) / ((fixedResistance + potResistance) ** 2);
@@ -39,6 +40,7 @@ export function calculateLedPotentiometer({
     exactPotentiometer,
     recommendedPotentiometer,
     exceedsCatalog,
+    minCurrentExceedsMax,
     minCurrent: minCurrentWithSelectedPot,
     maxCurrent,
     fixedResistorMaxPower,
