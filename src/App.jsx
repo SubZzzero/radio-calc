@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import {
   Activity,
   Cpu,
@@ -20,6 +20,298 @@ import { currentDivider, lcCutoff, rcCutoff, voltageDivider } from './utils/filt
 import { formatNumber, toNumber } from './utils/format';
 import { recommendedResistorPower } from './utils/standards';
 import { calculateLedPotentiometer } from './utils/potentiometer';
+
+const languages = [
+  { id: 'ru', label: 'RU' },
+  { id: 'en', label: 'EN' },
+];
+
+const en = {
+  'Закон Ома': 'Ohm\'s Law',
+  'Ограничительный R': 'Series R',
+  'Потенциометр': 'Potentiometer',
+  'Пайка': 'Soldering',
+  'Ширина дорожки': 'Trace width',
+  'Маркировка': 'Markings',
+  'Резисторы': 'Resistors',
+  'Делители': 'Dividers',
+  'Фильтры': 'Filters',
+  'Инженерные калькуляторы для макетирования, пайки и разводки плат.': 'Engineering calculators for breadboarding, soldering, and PCB layout.',
+  'Язык': 'Language',
+  'Практический расчет': 'Practical calculation',
+  'Свинцовый': 'Leaded',
+  'Бессвинцовый': 'Lead-free',
+  'Bi/Sn низкотемпературный': 'Bi/Sn low-temperature',
+  'Низкотемпературный': 'Low-temperature',
+  'Неизвестный припой': 'Unknown solder',
+  'Неизвестно': 'Unknown',
+  'проверьте по месту': 'check on the board',
+  'Плавится мягче и быстрее. Для старой техники и SnPb-припоя обычно не нужна экстремальная температура.': 'Melts more smoothly and faster. Older equipment and SnPb solder usually do not need extreme temperatures.',
+  'Требует больше тепла и хорошего флюса. Часто встречается на RoHS/PbF/LF платах.': 'Needs more heat and good flux. Common on RoHS/PbF/LF boards.',
+  'Используют для деликатного демонтажа и снижения тепловой нагрузки. Не смешивайте без понимания задачи.': 'Used for delicate desoldering and reducing thermal stress. Do not mix unless you understand the job.',
+  'Начинайте с умеренной температуры, добавьте флюс и смотрите, как быстро припой смачивает жало и площадку.': 'Start with a moderate temperature, add flux, and watch how quickly the solder wets the tip and pad.',
+  'Выводные детали': 'Through-hole parts',
+  'Обычная пайка': 'Normal soldering',
+  'SMD и мелкие площадки': 'SMD and small pads',
+  'Аккуратно': 'Carefully',
+  'Разъемы / пластик рядом': 'Connectors / nearby plastic',
+  'Риск плавления': 'Melting risk',
+  'Земляной полигон / массивная площадка': 'Ground pour / heavy pad',
+  'Много меди': 'A lot of copper',
+  'Демонтаж': 'Desoldering',
+  'Быстро прогреть': 'Heat quickly',
+  'Лужение проводов': 'Tinning wires',
+  'Масса металла': 'Metal mass',
+  'Для резисторов, конденсаторов и обычных ножек держите контакт коротким: примерно 1-3 секунды на точку.': 'For resistors, capacitors, and ordinary leads, keep contact short: about 1-3 seconds per joint.',
+  'Лучше небольшое жало подходящей формы, флюс и короткое касание. Маленькие площадки легко перегреть или сорвать.': 'Use a small tip with a suitable shape, flux, and a short touch. Small pads are easy to overheat or lift.',
+  'Температуру держите умеренной, но не слишком низкой: долгий прогрев тоже плавит пластик. Работайте быстро.': 'Keep the temperature moderate, but not too low: long heating also melts plastic. Work quickly.',
+  'Если тепло уходит в плату, помогает широкое жало, флюс и преднагрев. Не компенсируйте все одной максимальной температурой.': 'If heat sinks into the board, a wider tip, flux, and preheating help. Do not compensate with maximum temperature alone.',
+  'Добавьте свежий припой и флюс: смесь обычно плавится легче, а время нагрева площадки становится меньше.': 'Add fresh solder and flux: the mixture usually melts more easily and reduces pad heating time.',
+  'Провод отводит тепло. Берите достаточно крупное жало, чтобы прогреть жилу быстро и не плавить изоляцию.': 'Wire conducts heat away. Use a large enough tip to heat the conductor quickly without melting insulation.',
+  'пластиковые разъемы и держатели': 'plastic connectors and holders',
+  'светодиоды и оптопары': 'LEDs and optocouplers',
+  'электролитические конденсаторы': 'electrolytic capacitors',
+  'микросхемы в мелких корпусах': 'ICs in small packages',
+  'старые пятаки и тонкие дорожки': 'old pads and thin traces',
+  'Разогреть': 'Warm up',
+  'Очистить жало': 'Clean the tip',
+  'Залудить': 'Tin it',
+  'Держать чистым': 'Keep it clean',
+  'Дайте станции выйти на температуру. Холодное жало плохо передает тепло и пачкает пайку.': 'Let the station reach temperature. A cold tip transfers heat poorly and makes dirty joints.',
+  'Снимите черный налет влажной губкой или латунной стружкой. Блестящее жало работает заметно лучше.': 'Remove black residue with a damp sponge or brass wool. A shiny tip works much better.',
+  'Нанесите тонкий слой припоя на кончик жала. Это улучшает теплопередачу к выводу и площадке.': 'Apply a thin solder layer to the tip. This improves heat transfer to the lead and pad.',
+  'Во время работы периодически чистите и снова лудите жало. Сухим серым жалом паять тяжело.': 'While working, periodically clean and re-tin the tip. Soldering with a dry gray tip is difficult.',
+  'Дым не вдыхать': 'Do not inhale fumes',
+  'Флюс для электроники': 'Electronics flux',
+  'Свинец отдельно': 'Keep lead separate',
+  'Паяйте при проветривании или с вытяжкой. Дым флюса раздражает дыхание, даже если припой бессвинцовый.': 'Solder with ventilation or extraction. Flux fumes irritate breathing even with lead-free solder.',
+  'Берите канифольный, RMA или no-clean. Кислотный сантехнический флюс оставляет проводящие и коррозионные следы.': 'Use rosin, RMA, or no-clean flux. Acid plumbing flux leaves conductive and corrosive residue.',
+  'После SnPb-припоя мойте руки, не ешьте за столом и не используйте одну губку для бытовых вещей.': 'After SnPb solder, wash your hands, do not eat at the bench, and do not reuse the same sponge for household items.',
+  'Коснитесь вывода и площадки': 'Touch the lead and pad',
+  'Подайте припой в место пайки': 'Feed solder into the joint',
+  'Уберите припой, затем жало': 'Remove solder, then the tip',
+  'Жало должно греть оба металла сразу, а не только каплю припоя на кончике.': 'The tip should heat both metals at once, not only a solder blob on the tip.',
+  'Припой должен расплавиться от детали и площадки. Так он смачивает соединение, а не просто висит шариком.': 'Solder should melt from the part and pad. That way it wets the joint instead of hanging as a ball.',
+  'Дайте капле сформироваться и не двигайте деталь секунду, пока соединение застывает.': 'Let the fillet form and do not move the part for a second while the joint solidifies.',
+  'ровная капля с плавным переходом к площадке': 'even fillet with a smooth transition to the pad',
+  'припой смочил и вывод, и медную площадку': 'solder wetted both the lead and copper pad',
+  'нет шарика, иголок, трещин и перемычек': 'no ball, spikes, cracks, or bridges',
+  'площадка не потемнела и не отходит от платы': 'the pad is not darkened and does not lift from the board',
+  'Для мелкой электроники удобен припой 0.5-0.8 мм.': 'For small electronics, 0.5-0.8 mm solder is convenient.',
+  'Флюс лучше наносить мало, но вовремя: перед прогревом сложной или окисленной точки.': 'Apply flux sparingly but at the right time: before heating a difficult or oxidized joint.',
+  'Если жало серое и припой с него скатывается, сначала очистите и залудите его, а не поднимайте температуру.': 'If the tip is gray and solder rolls off it, clean and tin it first instead of raising temperature.',
+  'Старый припой не плавится': 'Old solder does not melt',
+  'Один вывод детали': 'One component lead',
+  'Разъем или много ножек': 'Connector or many pins',
+  'Земляная площадка забирает тепло': 'Ground pad sinks heat',
+  'Лучше добавить флюс. Если его нет, добавьте свежий припой с канифолью внутри, очистите и залудите жало, затем поднимайте температуру по 10 °C.': 'It is better to add flux. If you do not have it, add fresh rosin-core solder, clean and tin the tip, then raise temperature by 10 °C steps.',
+  'Не давите жалом в площадку: так легко оторвать пятак.': 'Do not press the tip into the pad: this can easily lift it.',
+  'Прогрейте вывод и площадку вместе, потом уберите припой отсосом или оплеткой. После этого шевелите вывод только когда он свободен.': 'Heat the lead and pad together, then remove solder with a pump or wick. Move the lead only after it is free.',
+  'Не тяните деталь, пока припой еще держит отверстие.': 'Do not pull the part while solder still holds the hole.',
+  'Добавьте свежий припой на все ноги, прогревайте по очереди и убирайте припой частями. Если нет флюса, хотя бы чаще чистите и лудите жало.': 'Add fresh solder to all pins, heat them one by one, and remove solder in portions. If there is no flux, at least clean and tin the tip more often.',
+  'Не пытайтесь вырвать разъем за один прогрев.': 'Do not try to rip out a connector in one heating pass.',
+  'Поставьте жало шире, добавьте свежий припой и поднимите температуру на 20-40 °C. Если есть флюс или преднагрев платы, используйте их.': 'Use a wider tip, add fresh solder, and raise temperature by 20-40 °C. If you have flux or board preheat, use them.',
+  'Не держите тонкое жало долго на одном месте.': 'Do not hold a thin tip in one spot for long.',
+  'Напряжение': 'Voltage',
+  'Ток': 'Current',
+  'Сопротивление': 'Resistance',
+  'Мощность': 'Power',
+  'Падение напряжения на участке цепи.': 'Voltage drop across the circuit section.',
+  'Ток через этот же участок цепи.': 'Current through the same circuit section.',
+  'Номинал резистора или сопротивление нагрузки.': 'Resistor value or load resistance.',
+  'Тепловая мощность, которую рассеивает нагрузка.': 'Thermal power dissipated by the load.',
+  'Напряжение U': 'Voltage U',
+  'Ток I': 'Current I',
+  'Сопротивление R': 'Resistance R',
+  'Мощность P': 'Power P',
+  'Входные параметры': 'Input parameters',
+  'Заполните ровно любые две положительные величины. Остальные значения будут рассчитаны автоматически по закону Ома и формулам мощности.': 'Enter exactly any two positive values. The remaining values will be calculated automatically from Ohm\'s law and power formulas.',
+  'исходное': 'input',
+  'пусто': 'empty',
+  'Очистить': 'Clear',
+  'Результат': 'Result',
+  'Расчет готов': 'Calculation ready',
+  'Ожидаю данные': 'Waiting for data',
+  'Используются': 'Using',
+  'задано': 'given',
+  'расчет': 'calc',
+  'Исходное значение пользователя': 'User input value',
+  'Данных достаточно': 'Enough data',
+  'Расчет выполнен по двум исходным величинам.': 'Calculated from two input values.',
+  'Нужно больше данных': 'More data needed',
+  'Слишком много исходных': 'Too many inputs',
+  'Оставьте ровно две величины, чтобы расчет был однозначным.': 'Leave exactly two values so the calculation is unambiguous.',
+  'Заполните две исходные величины': 'Enter two input values',
+  'Расчетная величина': 'Calculated value',
+  'Последовательная цепь': 'Series circuit',
+  '+Vs ── R ── нагрузка ── GND': '+Vs ── R ── load ── GND',
+  'Подходит для LED и других последовательных нагрузок, если известно падение напряжения на нагрузке. Проверка резистора считает нагрузку как фиксированное падение напряжения.': 'Useful for LEDs and other series loads when the load voltage drop is known. Resistor checking treats the load as a fixed voltage drop.',
+  'Подобрать резистор': 'Pick resistor',
+  'Проверить резистор': 'Check resistor',
+  'Vs питание': 'Vs supply',
+  'U нагрузки': 'Load voltage',
+  'Ваш резистор': 'Your resistor',
+  'Ток нагрузки': 'Load current',
+  'Запас мощности': 'Power margin',
+  'Запас R': 'R margin',
+  'Ряд': 'Series',
+  'Итог': 'Summary',
+  'Принятое напряжение нагрузки': 'Accepted load voltage',
+  'На резисторе останется': 'Voltage left on resistor',
+  'Мощность резистора': 'Resistor power',
+  'Резистор рассеивает': 'Resistor dissipates',
+  'Падение на нагрузке': 'Load voltage drop',
+  'Точное расчетное R': 'Exact calculated R',
+  'Ставить резистор': 'Use resistor',
+  'Нагрузка + потенциометр': 'Load + potentiometer',
+  '+Vs ── R защитный ── POT ── нагрузка ── GND': '+Vs ── protection R ── POT ── load ── GND',
+  'При максимальном сопротивлении потенциометра ток минимален. При минимальном сопротивлении ток ограничивает защитный резистор.': 'At maximum potentiometer resistance, current is minimal. At minimum resistance, current is limited by the protection resistor.',
+  'Защитный R': 'Protection R',
+  'Минимальный ток': 'Minimum current',
+  'Ставить потенциометр': 'Use potentiometer',
+  'Ток нагрузки на минимуме': 'Load current at minimum',
+  'Ток нагрузки на максимуме': 'Load current at maximum',
+  'Мощность защитного R': 'Protection R power',
+  'Потенциометр рассеивает до': 'Potentiometer dissipates up to',
+  'Максимум при Rpot': 'Maximum at Rpot',
+  'Заданный минимальный ток выше максимального тока с этим защитным резистором. Даже при минимальном сопротивлении потенциометра ток будет меньше заданного.': 'The requested minimum current is higher than the maximum current with this protection resistor. Even at minimum potentiometer resistance, current will be lower than requested.',
+  'Для заданного минимального тока нужен потенциометр больше доступного ряда. Показан максимальный номинал из списка.': 'The requested minimum current needs a potentiometer above the available range. The largest value from the list is shown.',
+  'PbF / Pb-Free / LF / RoHS': 'PbF / Pb-Free / LF / RoHS',
+  'Скорее бессвинцовый': 'Likely lead-free',
+  'Современная плата. Обычно нужна температура выше, чистое залуженное жало и хорошая передача тепла.': 'Modern board. Usually needs higher temperature, a clean tinned tip, and good heat transfer.',
+  'SnPb / Pb / старая плата': 'SnPb / Pb / old board',
+  'Скорее свинцовый': 'Likely leaded',
+  'Старая техника или прямо указанный SnPb. Плавится легче, температуру можно ниже.': 'Old equipment or explicitly marked SnPb. Melts more easily, so the temperature can be lower.',
+  'Не знаю / нет маркировки': 'I do not know / no marking',
+  'Безопасный старт': 'Safe start',
+  'Начните умеренно. Если припой не течет, сначала проверьте жало и теплопередачу, потом поднимайте температуру.': 'Start moderately. If solder does not flow, check the tip and heat transfer first, then raise temperature.',
+  'Резисторы, конденсаторы, обычные выводы.': 'Resistors, capacitors, ordinary leads.',
+  'Мелкое / рядом пластик': 'Small parts / nearby plastic',
+  'SMD, тонкие площадки, светодиоды, разъемы.': 'SMD, thin pads, LEDs, connectors.',
+  'Земляной полигон, толстые выводы, разъемы питания.': 'Ground pour, thick leads, power connectors.',
+  'Выпаиваю деталь': 'Removing a part',
+  'Нужно снять компонент, очистить отверстие или убрать лишний припой.': 'Remove a component, clear a hole, or remove excess solder.',
+  'Для обычной пайки сначала проверьте жало: оно должно быть чистым и залуженным. Если припой плохо смачивает площадку, помогает свежий припой или флюс. Температуру поднимайте только постепенно.': 'For normal soldering, check the tip first: it should be clean and tinned. If solder wets the pad poorly, fresh solder or flux helps. Raise temperature only gradually.',
+  'Для SMD и пластика рядом не компенсируйте все температурой. Работайте короткими касаниями, чистым жалом и небольшим количеством припоя. Если не смачивает, лучше добавить флюс или свежий припой, а не долго греть.': 'For SMD and nearby plastic, do not compensate with temperature alone. Work with short touches, a clean tip, and a small amount of solder. If it does not wet, add flux or fresh solder instead of heating for a long time.',
+  'Для большой земли и толстых выводов проблема чаще не в градусах, а в передаче тепла. Возьмите жало шире, добавьте свежий припой, прогрейте площадку быстрее. Температуру повышайте шагом 10-20 °C.': 'For large ground areas and thick leads, the problem is usually heat transfer rather than temperature. Use a wider tip, add fresh solder, and heat the pad faster. Raise temperature in 10-20 °C steps.',
+  'При выпайке старый припой часто окислен. Добавьте свежий припой, прогрейте вывод и площадку вместе, затем убирайте припой отсосом или оплеткой. Не тяните деталь, пока припой держит вывод.': 'When desoldering, old solder is often oxidized. Add fresh solder, heat the lead and pad together, then remove solder with a pump or wick. Do not pull the part while solder holds the lead.',
+  'Перед работой: паяльник': 'Before work: soldering iron',
+  'Перед выбором температуры подготовьте именно жало. Грязное или сухое жало может плохо паять даже при правильных градусах.': 'Before choosing a temperature, prepare the tip itself. A dirty or dry tip can solder poorly even at the right temperature.',
+  'Важно': 'Important',
+  '1. Плата или припой': '1. Board or solder',
+  'Выберите самое похожее. Для паяльника этого достаточно, чтобы не гадать с температурой.': 'Choose the closest match. For a soldering iron, this is enough to avoid guessing the temperature.',
+  'Что это значит': 'What this means',
+  '2. Что делаете': '2. What you are doing',
+  'Текущая задача': 'Current task',
+  'Температура паяльника': 'Soldering iron temperature',
+  'Начните с': 'Start with',
+  'Рабочий коридор': 'Working range',
+  'Как сделать одну хорошую пайку': 'How to make one good solder joint',
+  'Три движения': 'Three motions',
+  'Признаки нормы': 'Signs of a good joint',
+  'Материалы без сюрпризов': 'Predictable materials',
+  'Как выпаивать паяльником': 'How to desolder with an iron',
+  'При выпайке задача не “жарить сильнее”, а быстро передать тепло и убрать припой, пока площадка не перегрелась.': 'When desoldering, the goal is not to “cook harder”, but to transfer heat quickly and remove solder before the pad overheats.',
+  'Что легко перегреть': 'Easy to overheat',
+  'Параметры дорожки': 'Trace parameters',
+  'Это оценка по IPC-2221. Для платы берите округленную ширину вверх и учитывайте охлаждение, полигоны и реальные условия трассировки.': 'This is an IPC-2221 estimate. For a real board, round width upward and account for cooling, pours, and actual routing conditions.',
+  'Медь': 'Copper',
+  'Нагрев': 'Temperature rise',
+  'Слой': 'Layer',
+  'мкм': 'µm',
+  'Внешний': 'External',
+  'Внутренний': 'Internal',
+  'Оценочная ширина': 'Estimated width',
+  'Расчетная ширина': 'Calculated width',
+  'Округлить вверх до': 'Round up to',
+  'Площадь сечения, кв. mil': 'Cross-section area, sq. mil',
+  'Модель': 'Model',
+  'мм': 'mm',
+  'Используется IPC-2221: I = k × ΔT^0.44 × A^0.725. Для внутренних слоев коэффициент ниже, поэтому ширина получается больше.': 'Uses IPC-2221: I = k × ΔT^0.44 × A^0.725. Internal layers use a lower coefficient, so the width is larger.',
+  'Цветовые кольца': 'Color bands',
+  '4 или 5 полос: цифры, множитель, допуск.': '4 or 5 bands: digits, multiplier, tolerance.',
+  'Нет': 'None',
+  'Декодер SMD': 'SMD decoder',
+  'Пример: 103 = 10 kΩ, 4R7 = 4.7 Ω.': 'Example: 103 = 10 kΩ, 4R7 = 4.7 Ω.',
+  'SMD код': 'SMD code',
+  'Номинал по кольцам': 'Band value',
+  'Допуск': 'Tolerance',
+  'SMD номинал': 'SMD value',
+  'Система': 'System',
+  'Черный': 'Black',
+  'Коричневый': 'Brown',
+  'Красный': 'Red',
+  'Оранжевый': 'Orange',
+  'Желтый': 'Yellow',
+  'Зеленый': 'Green',
+  'Синий': 'Blue',
+  'Фиолетовый': 'Violet',
+  'Серый': 'Gray',
+  'Белый': 'White',
+  'Золото': 'Gold',
+  'Серебро': 'Silver',
+  'Стандартные номиналы': 'Standard values',
+  'E12 чаще встречается в простых наборах. E24 дает больше промежуточных значений, например 51 Ω.': 'E12 is more common in simple kits. E24 provides more intermediate values, for example 51 Ω.',
+  'Диапазон': 'Range',
+  'Мощность резисторов': 'Resistor power ratings',
+  'Это не номинал в омах, а допустимая рассеиваемая мощность резистора. Если расчет дал 0.136 W, резистор на 0.125 W уже маловат, поэтому берут 0.25 W.': 'This is not the resistance value, but the allowed dissipated power. If a calculation gives 0.136 W, a 0.125 W resistor is already too small, so use 0.25 W.',
+  'Минимальный': 'Minimum',
+  'Для очень малых токов и компактных схем, когда расчетная мощность заметно ниже 0.125 W.': 'For very small currents and compact circuits when calculated power is well below 0.125 W.',
+  'Обычный для макетирования': 'Common for prototyping',
+  'Самый частый выводной резистор. Хороший вариант для индикаторов, подтяжек и простых схем.': 'The most common through-hole resistor. A good option for indicators, pull-ups, and simple circuits.',
+  'Если греется': 'If it gets warm',
+  'Берите, когда расчет близок к 0.25 W или резистор будет работать долго.': 'Use when the calculation is close to 0.25 W or the resistor will work for a long time.',
+  'Повышенная мощность': 'Higher power',
+  'Для заметного нагрева, нагрузок и схем с большим падением напряжения.': 'For noticeable heating, loads, and circuits with a large voltage drop.',
+  'Силовые цепи': 'Power circuits',
+  'Для нагрузочных, гасящих и силовых резисторов. Обычно крупные корпуса.': 'For load, dropping, and power resistors. Usually larger packages.',
+  'Делитель напряжения: R1 + R2': 'Voltage divider: R1 + R2',
+  'Вход ── R1 ──●── R2 ── GND': 'Input ── R1 ──●── R2 ── GND',
+  '             │': '             │',
+  '           Выход': '           Output',
+  'Последовательные резисторы делят напряжение. Если выход нагружен, укажите сопротивление нагрузки: оно считается параллельно R2.': 'Series resistors divide voltage. If the output is loaded, enter the load resistance: it is calculated in parallel with R2.',
+  'Входное напряжение': 'Input voltage',
+  'R1 верхний': 'R1 top',
+  'R2 нижний': 'R2 bottom',
+  'R нагрузки': 'Load R',
+  'Выходное напряжение': 'Output voltage',
+  'Коэффициент': 'Ratio',
+  'Ток цепи, A': 'Circuit current, A',
+  'Ток цепи, mA': 'Circuit current, mA',
+  'Нижнее плечо с нагрузкой': 'Lower leg with load',
+  'Мощность R1': 'R1 power',
+  'Мощность R2': 'R2 power',
+  'Мощность нагрузки': 'Load power',
+  'Делитель тока: R1 || R2': 'Current divider: R1 || R2',
+  'Параллельные ветви делят ток.': 'Parallel branches divide current.',
+  'Общий ток': 'Total current',
+  'R1 ветвь': 'R1 branch',
+  'R2 ветвь': 'R2 branch',
+  'Ток через R1': 'Current through R1',
+  'Ток через R2': 'Current through R2',
+  'Эквивалентное R': 'Equivalent R',
+  'Напряжение ветвей': 'Branch voltage',
+  'RC / LC фильтры': 'RC / LC filters',
+  'RC считает частоту среза. LC считает резонансную частоту контура.': 'RC calculates cutoff frequency. LC calculates tank resonance frequency.',
+  'RC частота среза': 'RC cutoff frequency',
+  'LC резонансная частота': 'LC resonance frequency',
+  'Делитель напряжения': 'Voltage divider',
+  'Оставьте R нагрузки пустым для расчета без нагрузки. Если указать номинал, он считается параллельно R2.': 'Leave load R empty to calculate without a load. If you enter a value, it is calculated in parallel with R2.',
+  'R1 верхнее плечо': 'R1 upper leg',
+  'R2 нижнее плечо': 'R2 lower leg',
+  'Ток делителя': 'Divider current',
+};
+
+const I18nContext = createContext({ language: 'ru', setLanguage: () => {}, t: (value) => value });
+
+function useI18n() {
+  return useContext(I18nContext);
+}
+
+function translate(value, language) {
+  if (language === 'ru' || typeof value !== 'string') return value;
+  return en[value] ?? value;
+}
 
 const tabs = [
   { id: 'ohm', label: 'Закон Ома', icon: Gauge },
@@ -237,9 +529,26 @@ const fieldClass =
 
 function App() {
   const [activeTab, setActiveTab] = useState('ohm');
+  const [language, setLanguage] = useState(() => {
+    if (typeof window === 'undefined') return 'ru';
+    const savedLanguage = window.localStorage.getItem('radiocalc-language');
+    return languages.some((item) => item.id === savedLanguage) ? savedLanguage : 'ru';
+  });
+  const i18n = useMemo(() => ({
+    language,
+    setLanguage,
+    t: (value) => translate(value, language),
+  }), [language]);
+  const { t } = i18n;
   const ActiveIcon = tabs.find((tab) => tab.id === activeTab)?.icon ?? Activity;
 
+  useEffect(() => {
+    document.documentElement.lang = language;
+    window.localStorage.setItem('radiocalc-language', language);
+  }, [language]);
+
   return (
+    <I18nContext.Provider value={i18n}>
     <main className="min-h-screen px-3 py-3 text-slate-100 sm:px-4 sm:py-5 lg:px-5 lg:py-6 xl:px-8 2xl:px-10 2xl:py-8">
       <div className="mx-auto grid max-w-[1560px] grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-[250px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)] 2xl:grid-cols-[300px_minmax(0,1fr)] 2xl:gap-8">
         <div className="min-w-0 lg:h-[calc(100vh-3rem)] 2xl:h-[calc(100vh-4rem)]">
@@ -251,10 +560,23 @@ function App() {
               <div className="min-w-0">
                 <h1 className="font-display text-2xl font-bold tracking-[-0.08em] text-white sm:text-3xl 2xl:text-4xl">RadioCalc</h1>
                 <p className="mt-1 text-xs leading-5 text-slate-400 sm:text-sm lg:mt-3">
-                  Инженерные калькуляторы для макетирования, пайки и разводки плат.
+                  {t('Инженерные калькуляторы для макетирования, пайки и разводки плат.')}
                 </p>
               </div>
             </div>
+
+            <label className="mb-4 grid grid-cols-[minmax(0,1fr)_88px] items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.025] px-3 py-2.5 lg:mb-5 2xl:mb-7">
+              <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">{t('Язык')}</span>
+              <select
+                className="rounded-xl border border-cyan-300/10 bg-slate-950/70 px-3 py-2 font-display text-sm font-bold text-cyan-100 outline-none transition focus:border-cyan-300/50"
+                value={language}
+                onChange={(event) => setLanguage(event.target.value)}
+              >
+                {languages.map((item) => (
+                  <option key={item.id} value={item.id}>{item.label}</option>
+                ))}
+              </select>
+            </label>
 
             <nav className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 lg:mx-0 lg:block lg:space-y-2 lg:overflow-visible lg:px-0 lg:pb-0 2xl:space-y-3">
               {tabs.map((tab) => {
@@ -272,7 +594,7 @@ function App() {
                     onClick={() => setActiveTab(tab.id)}
                   >
                     <Icon className="shrink-0" size={18} />
-                    <span className="whitespace-nowrap font-display text-xs font-semibold uppercase tracking-[0.1em] sm:text-sm lg:tracking-[0.12em]">{tab.label}</span>
+                    <span className="whitespace-nowrap font-display text-xs font-semibold uppercase tracking-[0.1em] sm:text-sm lg:tracking-[0.12em]">{t(tab.label)}</span>
                   </button>
                 );
               })}
@@ -285,10 +607,10 @@ function App() {
             <div>
               <div className="mb-3 flex items-center gap-2 text-cyan-200 sm:gap-3">
                 <ActiveIcon className="shrink-0" size={22} />
-                <span className="font-display text-[11px] font-bold uppercase tracking-[0.22em] sm:text-xs sm:tracking-[0.35em]">Практический расчет</span>
+                <span className="font-display text-[11px] font-bold uppercase tracking-[0.22em] sm:text-xs sm:tracking-[0.35em]">{t('Практический расчет')}</span>
               </div>
               <h2 className="font-display text-3xl font-bold tracking-[-0.07em] text-white sm:text-4xl 2xl:text-5xl">
-                {tabs.find((tab) => tab.id === activeTab)?.label}
+                {t(tabs.find((tab) => tab.id === activeTab)?.label)}
               </h2>
             </div>
           </header>
@@ -305,10 +627,12 @@ function App() {
         </section>
       </div>
     </main>
+    </I18nContext.Provider>
   );
 }
 
 function OhmsLawPanel() {
+  const { language, t } = useI18n();
   const [values, setValues] = useState({ voltage: '5', current: '20', resistance: '', power: '' });
   const [currentUnit, setCurrentUnit] = useState('mA');
   const [powerUnit, setPowerUnit] = useState('W');
@@ -322,7 +646,7 @@ function OhmsLawPanel() {
   };
   const knownFields = ohmFields.filter((field) => Number.isFinite(inputs[field]));
   const result = knownFields.length === 2 ? calculateOhmsLaw(inputs) : null;
-  const status = getOhmStatus(knownFields.length);
+  const status = getOhmStatus(knownFields.length, language);
 
   function clearValues() {
     setValues({ voltage: '', current: '', resistance: '', power: '' });
@@ -346,17 +670,17 @@ function OhmsLawPanel() {
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div>
                     <div className="font-display text-xl font-bold tracking-[-0.06em] text-white">{meta.symbol}</div>
-                    <div className="mt-1 text-sm text-slate-400">{meta.label}</div>
+                    <div className="mt-1 text-sm text-slate-400">{t(meta.label)}</div>
                   </div>
                   <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${
                     active ? 'border-cyan-300/30 bg-cyan-300/10 text-cyan-100' : 'border-white/10 bg-white/[0.035] text-slate-500'
                   }`}>
-                    {active ? 'исходное' : 'пусто'}
+                    {active ? t('исходное') : t('пусто')}
                   </span>
                 </div>
                 {field === 'current' ? (
                   <InputWithUnitSelect
-                    label={`${meta.label} ${meta.symbol}`}
+                    label={`${t(meta.label)} ${meta.symbol}`}
                     value={values.current}
                     unit={currentUnit}
                     units={['A', 'mA']}
@@ -365,7 +689,7 @@ function OhmsLawPanel() {
                   />
                 ) : field === 'power' ? (
                   <InputWithUnitSelect
-                    label={`${meta.label} ${meta.symbol}`}
+                    label={`${t(meta.label)} ${meta.symbol}`}
                     value={values.power}
                     unit={powerUnit}
                     units={['W', 'mW']}
@@ -373,9 +697,9 @@ function OhmsLawPanel() {
                     onChange={(value) => setValues({ ...values, power: value })}
                   />
                 ) : (
-                  <Input label={`${meta.label} ${meta.symbol}`} unit={meta.unit} value={values[field]} onChange={(value) => setValues({ ...values, [field]: value })} />
+                  <Input label={`${t(meta.label)} ${meta.symbol}`} unit={meta.unit} value={values[field]} onChange={(value) => setValues({ ...values, [field]: value })} />
                 )}
-                <p className="mt-2 text-xs leading-5 text-slate-500">{meta.hint}</p>
+                <p className="mt-2 text-xs leading-5 text-slate-500">{t(meta.hint)}</p>
               </div>
             );
           })}
@@ -391,15 +715,15 @@ function OhmsLawPanel() {
             type="button"
             onClick={clearValues}
           >
-            Очистить
+            {t('Очистить')}
           </button>
         </div>
       </Card>
       <Card title="Результат">
         <div className="mb-5 rounded-[1.5rem] border border-cyan-300/25 bg-cyan-300/[0.08] px-4 py-5 sm:px-5 sm:py-6">
-          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-200 sm:tracking-[0.24em]">{result ? 'Расчет готов' : 'Ожидаю данные'}</div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-200 sm:tracking-[0.24em]">{result ? t('Расчет готов') : t('Ожидаю данные')}</div>
           <div className="mt-3 text-sm leading-6 text-slate-300">
-            {result ? `Используются: ${knownFields.map((field) => `${ohmFieldMeta[field].label} ${ohmFieldMeta[field].symbol}`).join(' + ')}.` : status.text}
+            {result ? `${t('Используются')}: ${knownFields.map((field) => `${t(ohmFieldMeta[field].label)} ${ohmFieldMeta[field].symbol}`).join(' + ')}.` : status.text}
           </div>
         </div>
         {ohmFields.map((field) => (
@@ -419,21 +743,22 @@ function OhmsLawPanel() {
 }
 
 function OhmResult({ field, inputs, result, knownFields, currentUnit, powerUnit }) {
+  const { t } = useI18n();
   const meta = ohmFieldMeta[field];
   const known = knownFields.includes(field);
   const value = result?.[field] ?? (known ? inputs[field] : null);
   return (
     <div className={`mb-3 min-w-0 rounded-2xl border px-4 py-4 sm:px-5 sm:py-5 ${known ? 'border-white/10 bg-white/[0.025]' : 'border-cyan-300/15 bg-white/[0.04]'}`}>
       <div className="flex items-start justify-between gap-3">
-        <div className="break-words text-[11px] font-semibold uppercase leading-4 tracking-normal text-slate-500">{meta.label} {meta.symbol}</div>
+        <div className="break-words text-[11px] font-semibold uppercase leading-4 tracking-normal text-slate-500">{t(meta.label)} {meta.symbol}</div>
         <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.12em] ${known ? 'border-white/10 text-slate-500' : 'border-cyan-300/25 text-cyan-100'}`}>
-          {known ? 'задано' : 'расчет'}
+          {known ? t('задано') : t('расчет')}
         </span>
       </div>
       <div className={`mt-3 break-words font-display text-lg font-bold leading-7 sm:mt-4 sm:text-xl 2xl:text-[22px] ${known ? 'text-slate-300' : 'text-white'}`}>
         {formatOhmValue(field, value, currentUnit, powerUnit)}
       </div>
-      <div className="mt-2 text-xs leading-5 text-slate-500">{known ? 'Исходное значение пользователя' : getOhmFormula(field, knownFields)}</div>
+      <div className="mt-2 text-xs leading-5 text-slate-500">{known ? t('Исходное значение пользователя') : getOhmFormula(field, knownFields, t)}</div>
     </div>
   );
 }
@@ -443,26 +768,28 @@ function parsePositive(value) {
   return Number.isFinite(number) && number > 0 ? number : null;
 }
 
-function getOhmStatus(knownCount) {
+function getOhmStatus(knownCount, language) {
   if (knownCount === 2) {
     return {
-      title: 'Данных достаточно',
-      text: 'Расчет выполнен по двум исходным величинам.',
+      title: translate('Данных достаточно', language),
+      text: translate('Расчет выполнен по двум исходным величинам.', language),
       tone: 'border-cyan-300/25 bg-cyan-300/[0.07] text-cyan-100',
     };
   }
 
   if (knownCount < 2) {
     return {
-      title: 'Нужно больше данных',
-      text: `Заполните еще ${2 - knownCount} ${knownCount === 1 ? 'величину' : 'величины'}.`,
+      title: translate('Нужно больше данных', language),
+      text: language === 'en'
+        ? `Enter ${2 - knownCount} more ${knownCount === 1 ? 'value' : 'values'}.`
+        : `Заполните еще ${2 - knownCount} ${knownCount === 1 ? 'величину' : 'величины'}.`,
       tone: 'border-amber-300/25 bg-amber-300/[0.07] text-amber-100',
     };
   }
 
   return {
-    title: 'Слишком много исходных',
-    text: 'Оставьте ровно две величины, чтобы расчет был однозначным.',
+    title: translate('Слишком много исходных', language),
+    text: translate('Оставьте ровно две величины, чтобы расчет был однозначным.', language),
     tone: 'border-amber-300/25 bg-amber-300/[0.07] text-amber-100',
   };
 }
@@ -473,8 +800,8 @@ function formatOhmValue(field, value, currentUnit, powerUnit) {
   return formatNumber(value, ohmResultMeta[field].unit);
 }
 
-function getOhmFormula(field, knownFields) {
-  if (knownFields.length !== 2) return 'Заполните две исходные величины';
+function getOhmFormula(field, knownFields, t) {
+  if (knownFields.length !== 2) return t('Заполните две исходные величины');
   const has = (name) => knownFields.includes(name);
 
   if (field === 'voltage') {
@@ -498,10 +825,11 @@ function getOhmFormula(field, knownFields) {
     if (has('current') && has('resistance')) return 'P = I² × R';
   }
 
-  return 'Расчетная величина';
+  return t('Расчетная величина');
 }
 
 function LedPanel() {
+  const { t } = useI18n();
   const [mode, setMode] = useState('pick');
   const [form, setForm] = useState({
     supplyVoltage: '9',
@@ -543,7 +871,7 @@ function LedPanel() {
             type="button"
             onClick={() => setMode('pick')}
           >
-            Подобрать резистор
+            {t('Подобрать резистор')}
           </button>
           <button
             className={`rounded-xl px-4 py-3 text-left font-display text-sm font-semibold uppercase tracking-[0.12em] transition ${
@@ -552,7 +880,7 @@ function LedPanel() {
             type="button"
             onClick={() => setMode('check')}
           >
-            Проверить резистор
+            {t('Проверить резистор')}
           </button>
         </div>
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-3 2xl:gap-5">
@@ -574,7 +902,7 @@ function LedPanel() {
       </Card>
       {mode === 'check' ? (
         <div className="rounded-[1.5rem] border border-amber-300/60 bg-slate-950/55 p-5 sm:p-6">
-          <h3 className="mb-5 font-display text-sm font-bold uppercase tracking-[0.16em] text-amber-100 sm:tracking-[0.2em]">Итог</h3>
+          <h3 className="mb-5 font-display text-sm font-bold uppercase tracking-[0.16em] text-amber-100 sm:tracking-[0.2em]">{t('Итог')}</h3>
           <Result label="Принятое напряжение нагрузки" value={formatNumber(checkResult?.ledVoltage, 'V')} />
           <Result label="На резисторе останется" value={formatNumber(checkResult?.voltageOnResistor, 'V')} />
           <Result label="Мощность резистора" value={formatNumber(checkResult?.powerRecommendation?.recommended, 'W')} accent />
@@ -583,7 +911,7 @@ function LedPanel() {
         </div>
       ) : (
         <div className="rounded-[1.5rem] border border-amber-300/60 bg-slate-950/55 p-5 sm:p-6">
-          <h3 className="mb-5 font-display text-sm font-bold uppercase tracking-[0.16em] text-amber-100 sm:tracking-[0.2em]">Итог</h3>
+          <h3 className="mb-5 font-display text-sm font-bold uppercase tracking-[0.16em] text-amber-100 sm:tracking-[0.2em]">{t('Итог')}</h3>
           <Result label="Падение на нагрузке" value={formatNumber(ledVoltage, 'V')} />
           <Result label="Точное расчетное R" value={formatNumber(pickResult?.exactResistance, 'Ω')} />
           <Result label="На резисторе останется" value={formatNumber(pickResult?.voltageOnResistor, 'V')} />
@@ -598,6 +926,7 @@ function LedPanel() {
 }
 
 function PotentiometerPanel() {
+  const { t } = useI18n();
   const [form, setForm] = useState({
     supplyVoltage: '9',
     forwardVoltage: '2.0',
@@ -625,7 +954,7 @@ function PotentiometerPanel() {
         </div>
       </Card>
       <div className="rounded-[1.5rem] border border-amber-300/60 bg-slate-950/55 p-5 sm:p-6">
-        <h3 className="mb-5 font-display text-sm font-bold uppercase tracking-[0.16em] text-amber-100 sm:tracking-[0.2em]">Итог</h3>
+        <h3 className="mb-5 font-display text-sm font-bold uppercase tracking-[0.16em] text-amber-100 sm:tracking-[0.2em]">{t('Итог')}</h3>
         <Result label="Ставить потенциометр" value={formatNumber(result?.recommendedPotentiometer, 'Ω')} accent />
         <Result label="Ток нагрузки на минимуме" value={formatNumber(result?.minCurrent * 1_000, 'mA', 1)} />
         <Result label="Ток нагрузки на максимуме" value={formatNumber(result?.maxCurrent * 1_000, 'mA', 1)} />
@@ -634,12 +963,12 @@ function PotentiometerPanel() {
         <Result label="Максимум при Rpot" value={formatNumber(result?.potMaxPowerResistance, 'Ω')} />
         {result?.minCurrentExceedsMax && (
           <p className="mt-5 rounded-xl border border-red-300/25 bg-red-300/[0.06] p-4 text-sm leading-6 text-red-50">
-            Заданный минимальный ток выше максимального тока с этим защитным резистором. Даже при минимальном сопротивлении потенциометра ток будет меньше заданного.
+            {t('Заданный минимальный ток выше максимального тока с этим защитным резистором. Даже при минимальном сопротивлении потенциометра ток будет меньше заданного.')}
           </p>
         )}
         {result?.exceedsCatalog && (
           <p className="mt-5 rounded-xl border border-amber-300/20 bg-amber-300/[0.06] p-4 text-sm leading-6 text-amber-50">
-            Для заданного минимального тока нужен потенциометр больше доступного ряда. Показан максимальный номинал из списка.
+            {t('Для заданного минимального тока нужен потенциометр больше доступного ряда. Показан максимальный номинал из списка.')}
           </p>
         )}
       </div>
@@ -648,6 +977,7 @@ function PotentiometerPanel() {
 }
 
 function SolderingPanel() {
+  const { t } = useI18n();
   const boardChoices = [
     {
       id: 'leadFreeBoard',
@@ -723,9 +1053,9 @@ function SolderingPanel() {
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-cyan-300/25 bg-cyan-300/10 font-display text-xs font-bold text-cyan-100">
                   {index + 1}
                 </span>
-                <span className="font-display text-lg font-bold tracking-[-0.04em] text-white">{item.title}</span>
+                <span className="font-display text-lg font-bold tracking-[-0.04em] text-white">{t(item.title)}</span>
               </div>
-              <p className="text-sm leading-6 text-slate-300">{item.text}</p>
+              <p className="text-sm leading-6 text-slate-300">{t(item.text)}</p>
             </div>
           ))}
         </div>
@@ -736,9 +1066,9 @@ function SolderingPanel() {
           {solderSafetyTips.map((item) => (
             <div key={item.title} className="relative overflow-hidden rounded-2xl border border-amber-300/20 bg-gradient-to-br from-amber-300/[0.12] via-white/[0.035] to-cyan-300/[0.06] p-4 2xl:min-h-[150px]">
               <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-amber-200/10 blur-2xl" />
-              <div className="relative text-[11px] font-bold uppercase tracking-[0.18em] text-amber-100">Важно</div>
-              <div className="relative mt-3 font-display text-lg font-bold tracking-[-0.04em] text-white">{item.title}</div>
-              <p className="relative mt-3 text-sm leading-6 text-slate-300">{item.text}</p>
+              <div className="relative text-[11px] font-bold uppercase tracking-[0.18em] text-amber-100">{t('Важно')}</div>
+              <div className="relative mt-3 font-display text-lg font-bold tracking-[-0.04em] text-white">{t(item.title)}</div>
+              <p className="relative mt-3 text-sm leading-6 text-slate-300">{t(item.text)}</p>
             </div>
           ))}
         </div>
@@ -760,17 +1090,17 @@ function SolderingPanel() {
                 type="button"
                 onClick={() => setBoardChoiceId(item.id)}
               >
-                <span className="block font-display text-xl font-bold tracking-[-0.05em] text-white">{item.title}</span>
+                <span className="block font-display text-xl font-bold tracking-[-0.05em] text-white">{t(item.title)}</span>
                 <span className="mt-3 inline-flex rounded-full border border-amber-300/25 bg-amber-300/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-amber-100">
-                  {item.label}
+                  {t(item.label)}
                 </span>
               </button>
             );
           })}
         </div>
         <div className="mt-4 min-h-[78px] rounded-2xl border border-white/10 bg-slate-950/55 px-5 py-4">
-          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Что это значит</div>
-          <p className="mt-2 text-sm leading-6 text-slate-300">{boardChoice.text}</p>
+          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">{t('Что это значит')}</div>
+          <p className="mt-2 text-sm leading-6 text-slate-300">{t(boardChoice.text)}</p>
         </div>
       </Card>
 
@@ -789,34 +1119,34 @@ function SolderingPanel() {
                 type="button"
                 onClick={() => setWorkChoiceId(item.id)}
               >
-                <span className="block font-display text-xl font-bold tracking-[-0.05em] text-white">{item.title}</span>
+                <span className="block font-display text-xl font-bold tracking-[-0.05em] text-white">{t(item.title)}</span>
               </button>
             );
           })}
         </div>
         <div className="mt-4 min-h-[70px] rounded-2xl border border-white/10 bg-slate-950/55 px-5 py-4">
-          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Текущая задача</div>
-          <p className="mt-2 text-sm leading-6 text-slate-300">{workChoice.text}</p>
+          <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">{t('Текущая задача')}</div>
+          <p className="mt-2 text-sm leading-6 text-slate-300">{t(workChoice.text)}</p>
         </div>
       </Card>
 
       <Card title="Температура паяльника" wide>
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[300px_minmax(0,1fr)] 2xl:grid-cols-[320px_minmax(0,1fr)]">
           <div className="rounded-[1.5rem] border border-cyan-300/25 bg-cyan-300/[0.08] px-4 py-5 sm:px-5 sm:py-6">
-            <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-200 sm:tracking-[0.24em]">Начните с</div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-200 sm:tracking-[0.24em]">{t('Начните с')}</div>
             <div className="mt-3 font-display text-3xl font-bold tracking-[-0.08em] text-white sm:text-4xl 2xl:text-5xl">
               {startTemperature} °C
             </div>
-            <div className="mt-4 text-sm leading-6 text-slate-300">Рабочий коридор: {temperatureRange[0]}-{temperatureRange[1]} °C.</div>
+            <div className="mt-4 text-sm leading-6 text-slate-300">{t('Рабочий коридор')}: {temperatureRange[0]}-{temperatureRange[1]} °C.</div>
           </div>
           <div className="flex flex-col justify-between rounded-2xl border border-white/10 bg-white/[0.035] px-5 py-5 2xl:min-h-[188px]">
-            <p className="text-sm leading-6 text-slate-300 2xl:max-h-[112px] 2xl:overflow-y-auto">{temperatureAdvice}</p>
+            <p className="text-sm leading-6 text-slate-300 2xl:max-h-[112px] 2xl:overflow-y-auto">{t(temperatureAdvice)}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 text-xs font-semibold text-cyan-100">
-                {workChoice.title}
+                {t(workChoice.title)}
               </span>
               <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-2 text-xs font-semibold text-amber-100">
-                {boardChoice.label}
+                {t(boardChoice.label)}
               </span>
             </div>
           </div>
@@ -826,7 +1156,7 @@ function SolderingPanel() {
       <Card title="Как сделать одну хорошую пайку" wide>
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.15fr_0.85fr]">
           <div className="rounded-[1.5rem] border border-cyan-300/20 bg-cyan-300/[0.055] p-4 sm:p-5">
-            <div className="mb-4 font-display text-xl font-bold tracking-[-0.05em] text-white">Три движения</div>
+            <div className="mb-4 font-display text-xl font-bold tracking-[-0.05em] text-white">{t('Три движения')}</div>
             <div className="grid grid-cols-1 gap-3">
               {solderTechniqueSteps.map((item, index) => (
                 <div key={item.title} className="grid grid-cols-[36px_minmax(0,1fr)] gap-3 rounded-2xl border border-white/10 bg-slate-950/45 p-3">
@@ -834,8 +1164,8 @@ function SolderingPanel() {
                     {index + 1}
                   </span>
                   <div>
-                    <div className="font-display text-base font-bold tracking-[-0.03em] text-white">{item.title}</div>
-                    <p className="mt-1 text-sm leading-6 text-slate-300">{item.text}</p>
+                    <div className="font-display text-base font-bold tracking-[-0.03em] text-white">{t(item.title)}</div>
+                    <p className="mt-1 text-sm leading-6 text-slate-300">{t(item.text)}</p>
                   </div>
                 </div>
               ))}
@@ -843,20 +1173,20 @@ function SolderingPanel() {
           </div>
           <div className="space-y-4">
             <div className="rounded-[1.5rem] border border-emerald-300/20 bg-emerald-300/[0.055] p-4 sm:p-5">
-              <div className="font-display text-xl font-bold tracking-[-0.05em] text-white">Признаки нормы</div>
+              <div className="font-display text-xl font-bold tracking-[-0.05em] text-white">{t('Признаки нормы')}</div>
               <div className="mt-4 grid grid-cols-1 gap-2">
                 {goodSolderJointSigns.map((item) => (
                   <div key={item} className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm leading-6 text-emerald-50">
-                    {item}
+                    {t(item)}
                   </div>
                 ))}
               </div>
             </div>
             <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-4 sm:p-5">
-              <div className="font-display text-xl font-bold tracking-[-0.05em] text-white">Материалы без сюрпризов</div>
+              <div className="font-display text-xl font-bold tracking-[-0.05em] text-white">{t('Материалы без сюрпризов')}</div>
               <div className="mt-4 space-y-3">
                 {beginnerMaterialTips.map((item) => (
-                  <p key={item} className="text-sm leading-6 text-slate-300">{item}</p>
+                  <p key={item} className="text-sm leading-6 text-slate-300">{t(item)}</p>
                 ))}
               </div>
             </div>
@@ -869,9 +1199,9 @@ function SolderingPanel() {
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
           {desolderingTips.map((item) => (
             <div key={item.title} className="grid rounded-2xl border border-white/10 bg-white/[0.035] p-4 2xl:min-h-[210px] 2xl:grid-rows-[auto_minmax(0,1fr)_auto]">
-              <div className="font-display text-lg font-bold tracking-[-0.04em] text-white">{item.title}</div>
-              <p className="mt-3 text-sm leading-6 text-slate-300">{item.do}</p>
-              <p className="mt-3 rounded-xl border border-amber-300/20 bg-amber-300/[0.06] px-3 py-3 text-sm leading-5 text-amber-50">{item.avoid}</p>
+              <div className="font-display text-lg font-bold tracking-[-0.04em] text-white">{t(item.title)}</div>
+              <p className="mt-3 text-sm leading-6 text-slate-300">{t(item.do)}</p>
+              <p className="mt-3 rounded-xl border border-amber-300/20 bg-amber-300/[0.06] px-3 py-3 text-sm leading-5 text-amber-50">{t(item.avoid)}</p>
             </div>
           ))}
         </div>
@@ -881,7 +1211,7 @@ function SolderingPanel() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
           {heatSensitiveParts.map((item) => (
             <div key={item} className="rounded-2xl border border-amber-300/20 bg-amber-300/[0.06] px-4 py-3 text-sm leading-6 text-amber-50">
-              {item}
+              {t(item)}
             </div>
           ))}
         </div>
@@ -891,6 +1221,7 @@ function SolderingPanel() {
 }
 
 function PcbPanel() {
+  const { t } = useI18n();
   const [form, setForm] = useState({ current: '3', copperMicrons: '35', temperatureRise: '10', layer: 'external' });
   const result = calculateTraceWidth({
     current: toNumber(form.current),
@@ -911,12 +1242,12 @@ function PcbPanel() {
         </div>
       </Card>
       <Card title="Оценочная ширина">
-        <Result label="Расчетная ширина" value={formatNumber(result?.widthMm, 'мм')} />
-        <Result label="Округлить вверх до" value={formatNumber(result?.roundedSafeMm, 'мм')} accent />
+        <Result label="Расчетная ширина" value={formatNumber(result?.widthMm, t('мм'))} />
+        <Result label="Округлить вверх до" value={formatNumber(result?.roundedSafeMm, t('мм'))} accent />
         <Result label="Площадь сечения, кв. mil" value={formatNumber(result?.areaMils, 'mil²')} />
         <Result label="Модель" value={result?.model ?? '—'} />
         <p className="mt-5 rounded-xl border border-cyan-300/20 bg-cyan-300/10 p-4 text-sm leading-6 text-cyan-100">
-          Используется IPC-2221: I = k × ΔT^0.44 × A^0.725. Для внутренних слоев коэффициент ниже, поэтому ширина получается больше.
+          {t('Используется IPC-2221: I = k × ΔT^0.44 × A^0.725. Для внутренних слоев коэффициент ниже, поэтому ширина получается больше.')}
         </p>
       </Card>
     </Grid>
@@ -924,6 +1255,7 @@ function PcbPanel() {
 }
 
 function MarkingsPanel() {
+  const { language } = useI18n();
   const colorKeys = Object.keys(resistorColors);
   const [bands, setBands] = useState(['brown', 'black', 'red', 'gold']);
   const [smd, setSmd] = useState('103');
@@ -938,7 +1270,7 @@ function MarkingsPanel() {
           {[0, 1, 2, 3, 4].map((index) => (
             <Select
               key={index}
-              label={`${index + 1} кольцо`}
+              label={language === 'en' ? `Band ${index + 1}` : `${index + 1} кольцо`}
               value={bands[index] ?? ''}
               onChange={(value) => {
                 const next = [...bands];
@@ -1005,13 +1337,14 @@ function ResistorsPanel() {
 }
 
 function PowerGuide({ power, title, text, accent = false }) {
+  const { t } = useI18n();
   return (
     <div className={`mb-3 rounded-2xl border px-4 py-4 ${accent ? 'border-cyan-300/30 bg-cyan-300/10' : 'border-white/10 bg-white/[0.035]'}`}>
       <div className="mb-2 flex items-center justify-between gap-3">
         <span className={`font-display text-xl font-bold ${accent ? 'text-cyan-100' : 'text-white'}`}>{power}</span>
-        <span className="text-right text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{title}</span>
+        <span className="text-right text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{t(title)}</span>
       </div>
-      <p className="text-sm leading-6 text-slate-400">{text}</p>
+      <p className="text-sm leading-6 text-slate-400">{t(text)}</p>
     </div>
   );
 }
@@ -1130,18 +1463,20 @@ function Grid({ children }) {
 }
 
 function Card({ title, children, wide = false }) {
+  const { t } = useI18n();
   return (
     <article className={`min-w-0 rounded-[1.5rem] border border-white/10 bg-slate-950/55 p-4 sm:p-5 2xl:p-6 ${wide ? '' : 'self-start'}`}>
-      <h3 className="mb-5 break-words font-display text-xs font-bold uppercase tracking-[0.16em] text-slate-300 sm:text-sm sm:tracking-[0.2em]">{title}</h3>
+      <h3 className="mb-5 break-words font-display text-xs font-bold uppercase tracking-[0.16em] text-slate-300 sm:text-sm sm:tracking-[0.2em]">{t(title)}</h3>
       {children}
     </article>
   );
 }
 
 function Input({ label, unit, value, onChange }) {
+  const { t } = useI18n();
   return (
     <label className="block min-w-0">
-      <span className="mb-2 block text-sm font-medium text-slate-400">{label}</span>
+      <span className="mb-2 block text-sm font-medium text-slate-400">{t(label)}</span>
       {unit ? (
         <div className="grid grid-cols-[minmax(0,1fr)_48px] overflow-hidden rounded-xl border border-cyan-300/10 bg-slate-950/70 transition focus-within:border-cyan-300/50 focus-within:shadow-glow sm:grid-cols-[minmax(0,1fr)_52px]">
           <input
@@ -1159,9 +1494,10 @@ function Input({ label, unit, value, onChange }) {
 }
 
 function InputWithUnitSelect({ label, value, onChange, unit, units, onUnitChange }) {
+  const { t } = useI18n();
   return (
     <label className="block min-w-0">
-      <span className="mb-2 block text-sm font-medium text-slate-400">{label}</span>
+      <span className="mb-2 block text-sm font-medium text-slate-400">{t(label)}</span>
       <div className="grid grid-cols-[minmax(0,1fr)_74px] overflow-hidden rounded-xl border border-cyan-300/10 bg-slate-950/70 transition focus-within:border-cyan-300/50 focus-within:shadow-glow sm:grid-cols-[minmax(0,1fr)_86px]">
         <input
           className="min-w-0 bg-transparent px-3 py-3 font-display text-base text-cyan-50 outline-none sm:px-4 sm:text-lg"
@@ -1183,13 +1519,14 @@ function InputWithUnitSelect({ label, value, onChange, unit, units, onUnitChange
 }
 
 function Select({ label, value, onChange, options, suffix }) {
-  const normalized = useMemo(() => options.map((option) => (Array.isArray(option) ? option : [option, `${option}${suffix ? ` ${suffix}` : ''}`])), [options, suffix]);
+  const { t } = useI18n();
+  const normalized = useMemo(() => options.map((option) => (Array.isArray(option) ? option : [option, `${option}${suffix ? ` ${t(suffix)}` : ''}`])), [options, suffix, t]);
   return (
     <label className="block min-w-0">
-      <span className="mb-2 block text-sm font-medium text-slate-400">{label}</span>
+      <span className="mb-2 block text-sm font-medium text-slate-400">{t(label)}</span>
       <select className={fieldClass} value={value} onChange={(event) => onChange(event.target.value)}>
         {normalized.map(([optionValue, labelText]) => (
-          <option key={optionValue || 'empty'} value={optionValue}>{labelText}</option>
+          <option key={optionValue || 'empty'} value={optionValue}>{t(labelText)}</option>
         ))}
       </select>
     </label>
@@ -1197,26 +1534,29 @@ function Select({ label, value, onChange, options, suffix }) {
 }
 
 function Result({ label, value, accent = false }) {
+  const { t } = useI18n();
   return (
     <div className="mb-3 min-w-0 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-4 sm:px-5 sm:py-5">
-      <div className="break-words text-[11px] font-semibold uppercase leading-4 tracking-normal text-slate-500">{label}</div>
+      <div className="break-words text-[11px] font-semibold uppercase leading-4 tracking-normal text-slate-500">{t(label)}</div>
       <div className={`mt-3 break-words font-display text-lg font-bold leading-7 sm:mt-4 sm:text-xl 2xl:text-[22px] ${accent ? 'text-cyan-200' : 'text-white'}`}>{value}</div>
     </div>
   );
 }
 
 function Hint({ children }) {
+  const { t } = useI18n();
   return (
     <div className="mb-5 rounded-xl border border-white/10 bg-white/[0.025] px-4 py-3 text-sm text-slate-400">
-      {children}
+      {typeof children === 'string' ? t(children) : children}
     </div>
   );
 }
 
 function CircuitBox({ lines }) {
+  const { t } = useI18n();
   return (
     <pre className="mb-4 overflow-x-auto rounded-xl border border-cyan-300/15 bg-slate-950/60 px-3 py-3 font-display text-xs leading-6 text-cyan-100 sm:px-4 sm:text-sm">
-      {lines.join('\n')}
+      {lines.map((line) => t(line)).join('\n')}
     </pre>
   );
 }
