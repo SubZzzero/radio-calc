@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://radio-calc.web.app/sitemap.xml

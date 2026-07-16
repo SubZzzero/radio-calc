@@ -3,14 +3,56 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#070b10" />
     <meta
       name="description"
-      content="RadioCalc: инженерные калькуляторы для радиолюбителей и PCB-дизайна"
+      content="RadioCalc: онлайн-калькуляторы для радиолюбителей и электроники. Закон Ома, подбор резистора, ширина дорожки PCB, маркировка SMD, делители, фильтры и пайка."
     />
-    <title>RadioCalc</title>
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://radio-calc.web.app/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://radio-calc.web.app/" />
+    <meta property="og:title" content="RadioCalc: калькуляторы для радиолюбителей и PCB" />
+    <meta property="og:description" content="Быстрые инженерные расчеты для электроники: закон Ома, LED-резистор, PCB-дорожки, SMD-маркировка, делители и фильтры." />
+    <meta property="og:site_name" content="RadioCalc" />
+    <meta name="twitter:card" content="summary" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "RadioCalc",
+        "applicationCategory": "EngineeringApplication",
+        "operatingSystem": "Web",
+        "url": "https://radio-calc.web.app/",
+        "description": "Онлайн-калькуляторы для радиолюбителей и электроники: закон Ома, подбор резистора, ширина дорожки PCB, маркировка SMD, делители, фильтры и пайка.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
+    <title>RadioCalc: калькуляторы для радиолюбителей и PCB</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main>
+        <h1>RadioCalc: инженерные калькуляторы для радиолюбителей, пайки и PCB</h1>
+        <p>Онлайн-инструменты для расчетов в электронике: закон Ома, подбор резистора, ширина дорожки PCB, маркировка SMD, делители напряжения, RC и LC фильтры, температура пайки и подбор потенциометра.</p>
+        <nav aria-label="Калькуляторы RadioCalc">
+          <a href="#ohm">Калькулятор закона Ома</a>
+          <a href="#led">Подобрать резистор</a>
+          <a href="#pcb">Ширина дорожки PCB</a>
+          <a href="#markings">Маркировка резисторов и SMD</a>
+          <a href="#resistors">Номиналы резисторов E12/E24</a>
+          <a href="#dividers">Делители напряжения и тока</a>
+          <a href="#filters">RC и LC фильтры</a>
+          <a href="#soldering">Температура пайки</a>
+          <a href="#pot">Потенциометр в нагрузке</a>
+        </nav>
+        <p>RadioCalc помогает быстро подобрать рабочие номиналы, проверить мощность компонентов и оценить параметры схемы перед сборкой, ремонтом или разводкой печатной платы.</p>
+      </main>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
