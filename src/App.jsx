@@ -91,14 +91,14 @@ const solderTasks = [
     label: 'SMD и мелкие площадки',
     badge: 'Аккуратно',
     adjust: [-20, -10],
-    tip: 'Лучше тонкое жало, флюс и короткое касание. Маленькие площадки легко перегреть или сорвать.',
+    tip: 'Лучше небольшое жало подходящей формы, флюс и короткое касание. Маленькие площадки легко перегреть или сорвать.',
   },
   {
     id: 'plastic',
     label: 'Разъемы / пластик рядом',
     badge: 'Риск плавления',
     adjust: [-30, -15],
-    tip: 'Температуру держите ниже, работайте быстро. Пластик разъемов часто страдает раньше, чем сама пайка.',
+    tip: 'Температуру держите умеренной, но не слишком низкой: долгий прогрев тоже плавит пластик. Работайте быстро.',
   },
   {
     id: 'ground',
@@ -148,6 +148,49 @@ const solderPrepTips = [
     title: 'Держать чистым',
     text: 'Во время работы периодически чистите и снова лудите жало. Сухим серым жалом паять тяжело.',
   },
+];
+
+const solderSafetyTips = [
+  {
+    title: 'Дым не вдыхать',
+    text: 'Паяйте при проветривании или с вытяжкой. Дым флюса раздражает дыхание, даже если припой бессвинцовый.',
+  },
+  {
+    title: 'Флюс для электроники',
+    text: 'Берите канифольный, RMA или no-clean. Кислотный сантехнический флюс оставляет проводящие и коррозионные следы.',
+  },
+  {
+    title: 'Свинец отдельно',
+    text: 'После SnPb-припоя мойте руки, не ешьте за столом и не используйте одну губку для бытовых вещей.',
+  },
+];
+
+const solderTechniqueSteps = [
+  {
+    title: 'Коснитесь вывода и площадки',
+    text: 'Жало должно греть оба металла сразу, а не только каплю припоя на кончике.',
+  },
+  {
+    title: 'Подайте припой в место пайки',
+    text: 'Припой должен расплавиться от детали и площадки. Так он смачивает соединение, а не просто висит шариком.',
+  },
+  {
+    title: 'Уберите припой, затем жало',
+    text: 'Дайте капле сформироваться и не двигайте деталь секунду, пока соединение застывает.',
+  },
+];
+
+const goodSolderJointSigns = [
+  'ровная капля с плавным переходом к площадке',
+  'припой смочил и вывод, и медную площадку',
+  'нет шарика, иголок, трещин и перемычек',
+  'площадка не потемнела и не отходит от платы',
+];
+
+const beginnerMaterialTips = [
+  'Для мелкой электроники удобен припой 0.5-0.8 мм.',
+  'Флюс лучше наносить мало, но вовремя: перед прогревом сложной или окисленной точки.',
+  'Если жало серое и припой с него скатывается, сначала очистите и залудите его, а не поднимайте температуру.',
 ];
 
 const desolderingTips = [
@@ -688,6 +731,19 @@ function SolderingPanel() {
         </div>
       </Card>
 
+      <Card title="Безопасный старт" wide>
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
+          {solderSafetyTips.map((item) => (
+            <div key={item.title} className="relative overflow-hidden rounded-2xl border border-amber-300/20 bg-gradient-to-br from-amber-300/[0.12] via-white/[0.035] to-cyan-300/[0.06] p-4 2xl:min-h-[150px]">
+              <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-amber-200/10 blur-2xl" />
+              <div className="relative text-[11px] font-bold uppercase tracking-[0.18em] text-amber-100">Важно</div>
+              <div className="relative mt-3 font-display text-lg font-bold tracking-[-0.04em] text-white">{item.title}</div>
+              <p className="relative mt-3 text-sm leading-6 text-slate-300">{item.text}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
       <Card title="1. Плата или припой" wide>
         <Hint>Выберите самое похожее. Для паяльника этого достаточно, чтобы не гадать с температурой.</Hint>
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-3">
@@ -762,6 +818,47 @@ function SolderingPanel() {
               <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-2 text-xs font-semibold text-amber-100">
                 {boardChoice.label}
               </span>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <Card title="Как сделать одну хорошую пайку" wide>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+          <div className="rounded-[1.5rem] border border-cyan-300/20 bg-cyan-300/[0.055] p-4 sm:p-5">
+            <div className="mb-4 font-display text-xl font-bold tracking-[-0.05em] text-white">Три движения</div>
+            <div className="grid grid-cols-1 gap-3">
+              {solderTechniqueSteps.map((item, index) => (
+                <div key={item.title} className="grid grid-cols-[36px_minmax(0,1fr)] gap-3 rounded-2xl border border-white/10 bg-slate-950/45 p-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full border border-cyan-300/30 bg-cyan-300/10 font-display text-sm font-bold text-cyan-100">
+                    {index + 1}
+                  </span>
+                  <div>
+                    <div className="font-display text-base font-bold tracking-[-0.03em] text-white">{item.title}</div>
+                    <p className="mt-1 text-sm leading-6 text-slate-300">{item.text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="rounded-[1.5rem] border border-emerald-300/20 bg-emerald-300/[0.055] p-4 sm:p-5">
+              <div className="font-display text-xl font-bold tracking-[-0.05em] text-white">Признаки нормы</div>
+              <div className="mt-4 grid grid-cols-1 gap-2">
+                {goodSolderJointSigns.map((item) => (
+                  <div key={item} className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm leading-6 text-emerald-50">
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.035] p-4 sm:p-5">
+              <div className="font-display text-xl font-bold tracking-[-0.05em] text-white">Материалы без сюрпризов</div>
+              <div className="mt-4 space-y-3">
+                {beginnerMaterialTips.map((item) => (
+                  <p key={item} className="text-sm leading-6 text-slate-300">{item}</p>
+                ))}
+              </div>
             </div>
           </div>
         </div>
